@@ -23,6 +23,10 @@ export const Navbar = async () => {
           <div className="flex flex-row gap-2 items-center">
             <div className="text-sm dark:text-zinc-300">Next.js Chatbot</div>
           </div>
+          {/* Add SCA Generator link here */}
+          <Link href="/sca-generator" className="text-sm hover:underline">
+            SCA Generator
+          </Link>
         </div>
 
         {session ? (
@@ -38,6 +42,12 @@ export const Navbar = async () => {
             <DropdownMenuContent align="end">
               <DropdownMenuItem>
                 <ThemeToggle />
+              </DropdownMenuItem>
+              {/* Add SCA Generator link in dropdown menu as well */}
+              <DropdownMenuItem>
+                <Link href="/sca-generator" className="w-full">
+                  SCA Generator
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="p-1 z-50">
                 <form

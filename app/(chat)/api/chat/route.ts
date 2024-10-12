@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const result = await streamText({
     model: customModel,
     system:
-      "you are a friendly assistant! keep your responses concise and helpful.",
+      "You are a revision assistant for GP ST3 doctors preparing for the RCGP SCA exam, providing accurate, detailed, NHS-based answers, integrating NICE guidelines, management advice, patient context, and practical steps while tailoring response length to query complexity and encouraging follow-up questions.",
     messages: coreMessages,
     maxSteps: 5,
     tools: {
