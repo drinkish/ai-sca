@@ -1,7 +1,11 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
+
 
 import React, { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 const SCAGeneratorClient: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -96,7 +100,11 @@ const SCAGeneratorClient: React.FC = () => {
         ref={patientNotesRef}
         className="bg-gray-100 p-4 rounded text-left font-sans text-sm overflow-auto max-h-96"
       >
-        <ReactMarkdown>{patientNotes}</ReactMarkdown>
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          className="prose max-w-none"
+        >{patientNotes}</ReactMarkdown>
       </div>
       
       <button 
@@ -110,7 +118,11 @@ const SCAGeneratorClient: React.FC = () => {
         ref={doctorNotesRef}
         className="bg-gray-100 p-4 rounded text-left font-sans text-sm overflow-auto max-h-96"
       >
-        <ReactMarkdown>{doctorNotes}</ReactMarkdown>
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          className="prose max-w-none"
+        >{doctorNotes}</ReactMarkdown>
       </div>
       
       <button 
@@ -124,7 +136,11 @@ const SCAGeneratorClient: React.FC = () => {
         ref={markSchemeRef}
         className="bg-gray-100 p-4 rounded text-left font-sans text-sm overflow-auto max-h-96"
       >
-        <ReactMarkdown>{markScheme}</ReactMarkdown>
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          className="prose max-w-none"
+        >{markScheme}</ReactMarkdown>
       </div>
     </div>
   );

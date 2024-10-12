@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import OpenAIApi, { OpenAI } from 'openai';
 
 
 // Initialize the OpenAI client
