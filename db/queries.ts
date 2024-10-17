@@ -27,12 +27,34 @@ export async function createUser(email: string, password: string) {
   let hash = hashSync(password, salt);
 
   try {
-    return await db.insert(user).values({ email, password: hash });
+    return await db.insert(user).values({ 
+      email, 
+      password: hash,
+      stripeCustomerId: null,
+      subscriptionStatus: 'inactive',
+      subscriptionEndDate: null
+    });
   } catch (error) {
     console.error("Failed to create user in database");
     throw error;
   }
 }
+
+export async function updateUserSubscription(userId: string, stripeCustomerId: string, subscriptionStatus: string, subscriptionEndDate: Date) {
+  try {
+    return await db.update(user)
+      .set({ 
+        stripeCustomerId, 
+        subscriptionStatus, 
+        subscriptionEndDate 
+      })
+      .where(eq(user.id, userId));
+  } catch (error) {
+    console.error("Failed to update user subscription in database");
+    throw error;
+  }
+}
+
 
 export async function saveChat({
   id,

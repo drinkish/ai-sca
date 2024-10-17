@@ -1,6 +1,6 @@
 import { NextAuthConfig } from "next-auth";
 
-export const authConfig = {
+export const authConfig: NextAuthConfig & { callbacks: { authorized: (params: { auth: any, request: { nextUrl: URL } }) => boolean | Response } } = {
   pages: {
     signIn: "/login",
     newUser: "/",
@@ -36,4 +36,4 @@ export const authConfig = {
       return true;
     },
   },
-} satisfies NextAuthConfig;
+};
