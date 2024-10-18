@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Chat } from "@/components/custom/chat";
 import { generateUUID } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { generateUUID } from "@/lib/utils";
 export default function ClientPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
   
     useEffect(() => {
       if (status === 'loading') return;
@@ -17,17 +18,15 @@ export default function ClientPage() {
         router.push('/login');
       } else if (session.user?.subscriptionStatus !== 'active') {
         router.push('/subscription');
+      } else {
+        setIsLoading(false);
       }
     }, [session, status, router]);
   
-    if (status === 'loading') {
+    if (isLoading) {
       return <div>Loading...</div>;
     }
   
-    if (session?.user?.subscriptionStatus === 'active') {
-      const id = generateUUID();
-      return <Chat key={id} id={id} initialMessages={[]} />;
-    }
-  
-    return null;
+    const id = generateUUID();
+    return <Chat key={id} id={id} initialMessages={[]} />;
   }
