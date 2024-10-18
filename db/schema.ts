@@ -22,6 +22,16 @@ export const chat = pgTable("Chat", {
     .references(() => user.id),
 });
 
+export const subscription = pgTable('Subscription', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  userId: uuid('userId').notNull().references(() => user.id),
+  stripeSubscriptionId: varchar('stripeSubscriptionId', { length: 255 }).notNull(),
+  status: varchar('status', { length: 50 }).notNull(),
+  priceId: varchar('priceId', { length: 255 }).notNull(),
+  currentPeriodStart: timestamp('currentPeriodStart').notNull(),
+  currentPeriodEnd: timestamp('currentPeriodEnd').notNull(),
+});
+
 export type Chat = Omit<InferSelectModel<typeof chat>, "messages"> & {
   messages: Array<Message>;
 };

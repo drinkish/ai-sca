@@ -7,8 +7,10 @@ import postgres from "postgres";
 
 import { user, chat, User } from "./schema";
 
-let client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
-let db = drizzle(client);
+const client = postgres(process.env.POSTGRES_URL!);
+export const db = drizzle(client);
+
+
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
