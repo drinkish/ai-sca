@@ -8,6 +8,8 @@ import { getChatById } from "@/db/queries";
 import { Chat } from "@/db/schema";
 import { generateUUID } from "@/lib/utils";
 
+
+
 function addToolMessageToChat({
   toolMessage,
   messages,

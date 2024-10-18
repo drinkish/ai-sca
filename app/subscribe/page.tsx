@@ -1,39 +1,59 @@
 'use client';
 
-import { loadStripe } from '@stripe/stripe-js';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSession } from "next-auth/react";
+import Link from 'next/link';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const SCAGeneratorClient: React.FC = () => {
+  const { data: session, status } = useSession();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-export default function Subscribe() {
-  const [loading, setLoading] = useState(false);
-
-  const handleSubscribe = async () => {
-    setLoading(true);
-    const stripe = await stripePromise;
-    const response = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ price: 'price_XXXXXXXXXXXXXXXXXXXXXXXX' }), // Replace with your actual price ID
-    });
-    const session = await response.json();
-    const result = await stripe!.redirectToCheckout({
-      sessionId: session.sessionId,
-    });
-    if (result.error) {
-      console.error(result.error);
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetch('/api/check-subscription')
+        .then(res => res.json())
+        .then(data => {
+          setIsSubscribed(data.isSubscribed);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error checking subscription:', err);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [session]);
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div>
+        <p>Please sign in to use the SCA Generator.</p>
+        <Link href="/api/auth/signin">Sign In</Link>
+      </div>
+    );
+  }
+
+  if (!isSubscribed) {
+    return (
+      <div>
+        <p>You need an active subscription to use the SCA Generator.</p>
+        <Link href="/subscribe">Subscribe Now</Link>
+      </div>
+    );
+  }
+
+  // Render your SCA Generator content here
   return (
     <div>
-      <h1>Subscribe to access the chatbot</h1>
-      <button onClick={handleSubscribe} disabled={loading}>
-        {loading ? 'Processing...' : 'Subscribe Now'}
-      </button>
+      {/* Your SCA Generator UI */}
     </div>
   );
-}
+};
+
+export default SCAGeneratorClient;

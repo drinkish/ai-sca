@@ -3,8 +3,20 @@ import type { NextRequest } from 'next/server';
 import { auth } from '@/app/(auth)/auth';  // Adjust this path if necessary
 import { authConfig } from '@/app/(auth)/auth.config';  // Adjust this path if necessary
 
+
 export async function middleware(request: NextRequest) {
   const session = await auth();
+
+  // Check if the route is protected (chat or sca-generator)
+  if (request.nextUrl.pathname.startsWith('/chat') || request.nextUrl.pathname.startsWith('/sca-generator')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    // Check subscription status
+    if (session.user.subscriptionStatus !== 'active') {
+      return NextResponse.redirect(new URL('/subscription', request.url));
+    }
+  }  
 
   // Check if the authorized callback exists and use it
   if (typeof authConfig.callbacks?.authorized === 'function') {
@@ -31,5 +43,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/:id', '/api/:path*', '/login', '/register'],
+  matcher: ['/', '/chat/:path*', '/sca-generator/:path*', '/api/:path*', '/login', '/register', '/subscription'],
 };
