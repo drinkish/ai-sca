@@ -6,7 +6,8 @@
     "dev": "next dev --turbo",
     "build": "tsx db/migrate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate": "tsx db/migrate.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.60",

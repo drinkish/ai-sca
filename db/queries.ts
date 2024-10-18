@@ -1,4 +1,4 @@
-"server-only";
+"use server";
 
 import { genSaltSync, hashSync } from "bcrypt-ts";
 import { desc, eq } from "drizzle-orm";
@@ -7,39 +7,14 @@ import postgres from "postgres";
 
 import { user, chat, User } from "./schema";
 
-let client: ReturnType<typeof postgres>;
-let db: ReturnType<typeof drizzle>;
-
-try {
-  if (!process.env.POSTGRES_URL) {
-    throw new Error("POSTGRES_URL is not defined in the environment variables");
-  }
-
-  // Use SSL only if not in a local environment
-  const ssl = process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined;
-
-  client = postgres(process.env.POSTGRES_URL, { 
-    ssl,
-    max: 1,
-    connect_timeout: 10,
-  });
-  
-  db = drizzle(client);
-  
-  console.log("Database connection established successfully");
-} catch (error) {
-  console.error("Failed to establish database connection:", error);
-  throw error;
-}
+let client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
+let db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
-    console.log(`Attempting to get user with email: ${email}`);
-    const result = await db.select().from(user).where(eq(user.email, email));
-    console.log(`User query result:`, result);
-    return result;
+    return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
-    console.error("Failed to get user from database:", error);
+    console.error("Failed to get user from database");
     throw error;
   }
 }
@@ -49,18 +24,15 @@ export async function createUser(email: string, password: string) {
   let hash = hashSync(password, salt);
 
   try {
-    console.log(`Attempting to create user with email: ${email}`);
-    const result = await db.insert(user).values({ 
+    return await db.insert(user).values({ 
       email, 
       password: hash,
       stripeCustomerId: null,
       subscriptionStatus: 'inactive',
       subscriptionEndDate: null
     });
-    console.log(`User creation result:`, result);
-    return result;
   } catch (error) {
-    console.error("Failed to create user in database:", error);
+    console.error("Failed to create user in database");
     throw error;
   }
 }
