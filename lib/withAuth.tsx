@@ -3,12 +3,8 @@
 'use client'; // 1. Mark as Client Component
 
 import { useRouter } from 'next/navigation'; // 2. Use next/navigation
-
 import { useSession } from 'next-auth/react';
-
-import { useEffect } from 'react';
-
-import React from 'react'; // Ensure React is imported
+import React, { useEffect } from 'react';
 
 // Define the type for WrappedComponent for better TypeScript support
 type WrappedComponentType = React.ComponentType<any>;

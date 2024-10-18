@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+
 import { auth } from '@/app/(auth)/auth';  // Adjust this path if necessary
 import { authConfig } from '@/app/(auth)/auth.config';  // Adjust this path if necessary
+
+import type { NextRequest } from 'next/server';
 
 
 export async function middleware(request: NextRequest) {

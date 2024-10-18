@@ -1,7 +1,6 @@
 'use client'
 
 import { loadStripe } from '@stripe/stripe-js'
-
 import { useSession } from 'next-auth/react'
 import { useState } from 'react'
 
