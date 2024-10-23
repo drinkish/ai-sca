@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/app/(auth)/auth';
-import { stripe } from '@/lib/stripe';
 import { db } from '@/db/queries';
 import { user } from '@/db/schema';
+import { stripe } from '@/lib/stripe';
+import { auth } from '@/app/(auth)/auth';
+
 import { eq } from 'drizzle-orm';
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {

@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import { stripe } from '@/lib/stripe.js';
-import { db } from '@/db/queries';
-import { user, subscription } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+
+// Local imports
+import { db } from '@/db/queries';
+import { subscription, user } from '@/db/schema';
+import { stripe } from '@/lib/stripe.js';
 
 export async function POST(req: Request) {
   const body = await req.text();
