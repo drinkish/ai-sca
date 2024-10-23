@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { auth } from '@/app/(auth)/auth';  // Adjust this path if necessary
-import { authConfig } from '@/app/(auth)/auth.config';  // Adjust this path if necessary
+import { auth } from '@/app/(auth)/auth';
+import { authConfig } from '@/app/(auth)/auth.config';
 
 import type { NextRequest } from 'next/server';
-
 
 export async function middleware(request: NextRequest) {
   const session = await auth();
@@ -24,7 +23,7 @@ export async function middleware(request: NextRequest) {
   if (typeof authConfig.callbacks?.authorized === 'function') {
     const authResult = await authConfig.callbacks.authorized({
       auth: session,
-      request: { nextUrl: request.nextUrl }
+      request
     });
 
     if (authResult === false) {

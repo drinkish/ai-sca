@@ -1,4 +1,5 @@
 import { NextAuthConfig } from "next-auth";
+import type { NextRequest } from 'next/server';
 
 export const authConfig = {
   pages: {
@@ -7,14 +8,14 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request }: { auth: any; request: NextRequest }) {
       let isLoggedIn = !!auth?.user;
-      let isOnChat = nextUrl.pathname.startsWith("/");
-      let isOnRegister = nextUrl.pathname.startsWith("/register");
-      let isOnLogin = nextUrl.pathname.startsWith("/login");
+      let isOnChat = request.nextUrl.pathname.startsWith("/");
+      let isOnRegister = request.nextUrl.pathname.startsWith("/register");
+      let isOnLogin = request.nextUrl.pathname.startsWith("/login");
 
       if (isLoggedIn && (isOnLogin || isOnRegister)) {
-        return Response.redirect(new URL("/", nextUrl));
+        return Response.redirect(new URL("/", request.nextUrl));
       }
 
       if (isOnRegister || isOnLogin) {
@@ -27,7 +28,7 @@ export const authConfig = {
       }
 
       if (isLoggedIn) {
-        return Response.redirect(new URL("/", nextUrl));
+        return Response.redirect(new URL("/", request.nextUrl));
       }
 
       return true;
