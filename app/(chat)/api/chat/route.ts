@@ -1,9 +1,19 @@
 import { convertToCoreMessages, Message, streamText } from "ai";
-import { z } from "zod";
-
 import { customModel } from "@/ai";
 import { auth } from "@/app/(auth)/auth";
 import { deleteChatById, getChatById, saveChat } from "@/db/queries";
+
+// Define stream configuration outside of the POST function
+const streamConfig = {
+  model: customModel,
+  system:
+    "You are a revision assistant for GP ST3 doctors preparing for the RCGP SCA exam, providing accurate, detailed, NHS-based answers, integrating NICE guidelines, management advice, patient context, and practical steps while tailoring response length to query complexity and encouraging follow-up questions.",
+  maxSteps: 5,
+  experimental_telemetry: {
+    isEnabled: true,
+    functionId: "stream-text",
+  },
+};
 
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Array<Message> } =
@@ -18,28 +28,8 @@ export async function POST(request: Request) {
   const coreMessages = convertToCoreMessages(messages);
 
   const result = await streamText({
-    model: customModel,
-    system:
-      "You are a revision assistant for GP ST3 doctors preparing for the RCGP SCA exam, providing accurate, detailed, NHS-based answers, integrating NICE guidelines, management advice, patient context, and practical steps while tailoring response length to query complexity and encouraging follow-up questions.",
+    ...streamConfig,
     messages: coreMessages,
-    maxSteps: 5,
-    tools: {
-      getWeather: {
-        description: "Get the current weather at a location",
-        parameters: z.object({
-          latitude: z.number(),
-          longitude: z.number(),
-        }),
-        execute: async ({ latitude, longitude }) => {
-          const response = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&hourly=temperature_2m&daily=sunrise,sunset&timezone=auto`,
-          );
-
-          const weatherData = await response.json();
-          return weatherData;
-        },
-      },
-    },
     onFinish: async ({ responseMessages }) => {
       if (session.user && session.user.id) {
         try {
@@ -52,10 +42,6 @@ export async function POST(request: Request) {
           console.error("Failed to save chat");
         }
       }
-    },
-    experimental_telemetry: {
-      isEnabled: true,
-      functionId: "stream-text",
     },
   });
 
