@@ -1,4 +1,5 @@
 import { NextAuthConfig } from "next-auth";
+
 import type { NextRequest } from 'next/server';
 
 export const authConfig = {
