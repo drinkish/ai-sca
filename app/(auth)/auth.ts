@@ -1,7 +1,9 @@
 import { compare } from "bcrypt-ts";
 import NextAuth, { DefaultSession, User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+
 import { getUser } from "@/db/queries";
+
 import { authConfig } from "./auth.config";
 
 declare module "next-auth" {
