@@ -4,18 +4,6 @@ import { customModel } from "@/ai";
 import { auth } from "@/app/(auth)/auth";
 import { deleteChatById, getChatById, saveChat } from "@/db/queries";
 
-// Define stream configuration outside of the POST function
-const streamConfig = {
-  model: customModel,
-  system:
-    "You are a revision assistant for GP ST3 doctors preparing for the RCGP SCA exam, providing accurate, detailed, NHS-based answers, integrating NICE guidelines, management advice, patient context, and practical steps while tailoring response length to query complexity and encouraging follow-up questions.",
-  maxSteps: 5,
-  experimental_telemetry: {
-    isEnabled: true,
-    functionId: "stream-text",
-  },
-};
-
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Array<Message> } =
     await request.json();
@@ -29,8 +17,15 @@ export async function POST(request: Request) {
   const coreMessages = convertToCoreMessages(messages);
 
   const result = await streamText({
-    ...streamConfig,
+    model: customModel,
+    system:
+      "You are a revision assistant for GP ST3 doctors preparing for the RCGP SCA exam, providing accurate, detailed, NHS-based answers, integrating NICE guidelines, management advice, patient context, and practical steps while tailoring response length to query complexity and encouraging follow-up questions.",
     messages: coreMessages,
+    maxSteps: 5,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: "stream-text",
+    },
     onFinish: async ({ responseMessages }) => {
       if (session.user && session.user.id) {
         try {
