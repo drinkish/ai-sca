@@ -1,61 +1,72 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import Link from "next/link";
 import { useSession } from "next-auth/react";
-import React, { useState, useEffect } from 'react';
 
+import { SubscribeButton } from "@/components/custom/SubscribeButton";
 
-
-const SCAGeneratorClient: React.FC = () => {
+export default function SubscribePage() {
   const { data: session, status } = useSession();
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (session?.user?.email) {
-      fetch('/api/check-subscription')
-        .then(res => res.json())
-        .then(data => {
-          setIsSubscribed(data.isSubscribed);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error('Error checking subscription:', err);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, [session]);
-
-  if (loading) {
-    return <div>Loading...</div>;
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    );
   }
 
   if (status === "unauthenticated") {
     return (
-      <div>
-        <p>Please sign in to use the SCA Generator.</p>
-        <Link href="/api/auth/signin">Sign In</Link>
+      <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+        <p className="text-lg">Please sign in to subscribe.</p>
+        <Link 
+          href="/api/auth/signin"
+          className="text-blue-600 hover:text-blue-800 underline"
+        >
+          Sign In
+        </Link>
       </div>
     );
   }
 
-  if (!isSubscribed) {
-    return (
-      <div>
-        <p>You need an active subscription to use the SCA Generator.</p>
-        <Link href="/subscribe">Subscribe Now</Link>
-      </div>
-    );
-  }
-
-  // Render your SCA Generator content here
   return (
-    <div>
-      {/* Your SCA Generator UI */}
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="max-w-2xl w-full space-y-8 text-center">
+        <h1 className="text-3xl font-bold">Subscribe to SCA Generator</h1>
+        
+        <div className="bg-white p-8 rounded-lg shadow-md space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold">Premium Access</h2>
+            <p className="text-gray-600">
+              Get unlimited access to the SCA Generator and enhance your preparation for the RCGP SCA exam.
+            </p>
+            
+            <ul className="text-left space-y-2 mt-4 mb-6">
+              <li className="flex items-center">
+                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Unlimited practice cases
+              </li>
+              <li className="flex items-center">
+                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                NICE guidelines integration
+              </li>
+              <li className="flex items-center">
+                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Detailed feedback and explanations
+              </li>
+            </ul>
+          </div>
+
+          <SubscribeButton />
+        </div>
+      </div>
     </div>
   );
-};
-
-export default SCAGeneratorClient;
+}
