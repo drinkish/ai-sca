@@ -59,16 +59,21 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const chat = await getChatById({ id });
+    const chat = await getChatById(id); // Updated: passing id directly instead of as an object
+
+    if (!chat) {
+      return new Response("Chat not found", { status: 404 });
+    }
 
     if (chat.userId !== session.user.id) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    await deleteChatById({ id });
+    await deleteChatById(id); // Updated: passing id directly instead of as an object
 
     return new Response("Chat deleted", { status: 200 });
   } catch (error) {
+    console.error("Error deleting chat:", error);
     return new Response("An error occurred while processing your request", {
       status: 500,
     });
