@@ -2,13 +2,8 @@
 
 import { genSaltSync, hashSync } from "bcrypt-ts";
 import { desc, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-
+import { db } from "./index";
 import { user, chat, User } from "./schema";
-
-const client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
-const db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
