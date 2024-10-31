@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 // Local imports
-import { db } from '@/db/queries';
+import { db } from '@/db'; // Updated import
 import { subscription, user } from '@/db/schema';
 import { stripe } from '@/lib/stripe.js';
 
