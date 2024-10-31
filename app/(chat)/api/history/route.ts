@@ -8,6 +8,11 @@ export async function GET() {
     return Response.json("Unauthorized!", { status: 401 });
   }
 
-  const chats = await getChatsByUserId({ id: session.user.id! });
-  return Response.json(chats);
+  try {
+    const chats = await getChatsByUserId(session.user.id!); // Updated: passing id directly
+    return Response.json(chats);
+  } catch (error) {
+    console.error("Error fetching chat history:", error);
+    return Response.json("Failed to fetch chat history", { status: 500 });
+  }
 }
