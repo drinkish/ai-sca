@@ -1,14 +1,11 @@
 import { CoreMessage, CoreToolMessage, Message, ToolInvocation } from "ai";
 import { notFound } from "next/navigation";
 
-
 import { auth } from "@/app/(auth)/auth";
 import { Chat as PreviewChat } from "@/components/custom/chat";
 import { getChatById } from "@/db/queries";
 import { Chat } from "@/db/schema";
 import { generateUUID } from "@/lib/utils";
-
-
 
 function addToolMessageToChat({
   toolMessage,
@@ -83,29 +80,41 @@ function convertToUIMessages(messages: Array<CoreMessage>): Array<Message> {
   }, []);
 }
 
-export default async function Page({ params }: { params: any }) {
-  const { id } = params;
-  const chatFromDb = await getChatById({ id });
-
-  if (!chatFromDb) {
-    notFound();
-  }
-
-  // type casting
-  const chat: Chat = {
-    ...chatFromDb,
-    messages: convertToUIMessages(chatFromDb.messages as Array<CoreMessage>),
+interface PageProps {
+  params: {
+    id: string;
   };
+}
 
-  const session = await auth();
+export default async function Page({ params }: PageProps) {
+  const { id } = params;
+  
+  try {
+    const chatFromDb = await getChatById(id); // Updated: passing id directly
 
-  if (!session || !session.user) {
+    if (!chatFromDb) {
+      return notFound();
+    }
+
+    const session = await auth();
+
+    if (!session?.user) {
+      return notFound();
+    }
+
+    if (session.user.id !== chatFromDb.userId) {
+      return notFound();
+    }
+
+    // type casting
+    const chat: Chat = {
+      ...chatFromDb,
+      messages: convertToUIMessages(chatFromDb.messages as Array<CoreMessage>),
+    };
+
+    return <PreviewChat id={chat.id} initialMessages={chat.messages} />;
+  } catch (error) {
+    console.error("Error fetching chat:", error);
     return notFound();
   }
-
-  if (session.user.id !== chat.userId) {
-    return notFound();
-  }
-
-  return <PreviewChat id={chat.id} initialMessages={chat.messages} />;
 }
