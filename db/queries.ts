@@ -7,10 +7,8 @@ import postgres from "postgres";
 
 import { user, chat, User } from "./schema";
 
-const client = postgres(process.env.POSTGRES_URL!);
-export const db = drizzle(client);
-
-
+const client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
+const db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
@@ -22,8 +20,8 @@ export async function getUser(email: string): Promise<Array<User>> {
 }
 
 export async function createUser(email: string, password: string) {
-  let salt = genSaltSync(10);
-  let hash = hashSync(password, salt);
+  const salt = genSaltSync(10);
+  const hash = hashSync(password, salt);
 
   try {
     return await db.insert(user).values({ 
@@ -39,8 +37,12 @@ export async function createUser(email: string, password: string) {
   }
 }
 
-
-export async function updateUserSubscription(userId: string, stripeCustomerId: string, subscriptionStatus: string, subscriptionEndDate: Date) {
+export async function updateUserSubscription(
+  userId: string, 
+  stripeCustomerId: string, 
+  subscriptionStatus: string, 
+  subscriptionEndDate: Date
+) {
   try {
     return await db.update(user)
       .set({ 
@@ -54,7 +56,6 @@ export async function updateUserSubscription(userId: string, stripeCustomerId: s
     throw error;
   }
 }
-
 
 export async function saveChat({
   id,
@@ -89,7 +90,7 @@ export async function saveChat({
   }
 }
 
-export async function deleteChatById({ id }: { id: string }) {
+export async function deleteChatById(id: string) {
   try {
     return await db.delete(chat).where(eq(chat.id, id));
   } catch (error) {
@@ -98,7 +99,7 @@ export async function deleteChatById({ id }: { id: string }) {
   }
 }
 
-export async function getChatsByUserId({ id }: { id: string }) {
+export async function getChatsByUserId(id: string) {
   try {
     return await db
       .select()
@@ -111,7 +112,7 @@ export async function getChatsByUserId({ id }: { id: string }) {
   }
 }
 
-export async function getChatById({ id }: { id: string }) {
+export async function getChatById(id: string) {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
