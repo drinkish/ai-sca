@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 
 export default function SubscriptionClient() {
-  const { data: session, status, update: updateSession } = useSession();
+  const { data: session, status, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -16,16 +16,30 @@ export default function SubscriptionClient() {
   
   // Handle redirect status and session refresh
   useEffect(() => {
-    if (searchParams.get('success')) {
-      // Refresh the session to get updated subscription status
-      updateSession();
-      // Optionally remove the query params
-      router.replace('/subscription');
-    }
+    const handleSubscriptionSuccess = async () => {
+      if (searchParams.get('success')) {
+        try {
+          // Force an immediate session refresh
+          await update();
+          console.log('Session updated:', session);
+          // Clean up the URL
+          router.replace('/subscription');
+        } catch (error) {
+          console.error('Failed to refresh session:', error);
+        }
+      }
+    };
+
+    handleSubscriptionSuccess();
+  }, [searchParams, update, router, session]);
+
+  // Handle subscription cancellation
+  useEffect(() => {
     if (searchParams.get('canceled')) {
       setError('Payment canceled. Please try again.');
+      router.replace('/subscription');
     }
-  }, [searchParams, updateSession, router]);
+  }, [searchParams, router]);
 
   const handleSubscribe = async () => {
     setIsLoading(true);
@@ -56,6 +70,15 @@ export default function SubscriptionClient() {
     }
   };
 
+  // Debug logging
+  useEffect(() => {
+    console.log('Current session status:', {
+      isAuthenticated: !!session,
+      subscriptionStatus: session?.user?.subscriptionStatus,
+      loading: status === 'loading'
+    });
+  }, [session, status]);
+
   // Loading state
   if (status === 'loading') {
     return (
@@ -80,13 +103,28 @@ export default function SubscriptionClient() {
             </div>
             <div className="text-gray-600">
               <h2 className="text-xl font-semibold mb-4">Premium Features Unlocked</h2>
-              <ul className="text-left space-y-2">
-                <li>✓ Access to all premium features</li>
-                <li>✓ Advanced capabilities</li>
-                <li>✓ Priority support</li>
+              <ul className="text-left space-y-2 pl-4">
+                <li className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  AI Tutor enhanced capabilities
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Unlimited SCA generated explanations
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Priority support
+                </li>
               </ul>
             </div>
-            {/* You could add subscription management options here */}
+            {/* Optional: Add subscription management button */}
             {/* <Button
               onClick={() => router.push('/account/billing')}
               variant="outline"
@@ -99,9 +137,26 @@ export default function SubscriptionClient() {
           <div className="space-y-6">
             <div className="p-6 bg-white rounded-lg shadow-sm border">
               <h2 className="text-xl font-semibold mb-4">Premium Features</h2>
-              <p className="text-gray-600 mb-6">
-                Subscribe to access premium features and unlock the full potential.
-              </p>
+              <ul className="text-left space-y-2 mb-6 pl-4">
+                <li className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  AI Tutor enhanced capabilities
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Unlimited SCA generated explanations
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Priority support
+                </li>
+              </ul>
               
               <Button
                 onClick={handleSubscribe}
