@@ -6,7 +6,7 @@ import Stripe from "stripe";
 import { validate as isUUID } from 'uuid';
 
 import { db } from "@/db";
-import { user, subscription, type NewSubscription } from "@/db/schema";
+import { user, subscription } from "@/db/schema";
 
 export const runtime = 'nodejs';
 
@@ -48,6 +48,12 @@ export async function POST(request: Request) {
         checkoutSession.subscription as string
       );
 
+      console.log('Retrieved subscription:', {
+        id: stripeSubscription.id,
+        status: stripeSubscription.status,
+        customerId: checkoutSession.customer
+      });
+
       // Begin transaction to update both tables
       await db.transaction(async (tx) => {
         // 1. Update user table
@@ -60,35 +66,65 @@ export async function POST(request: Request) {
           })
           .where(sql`${user.id} = ${metadata.userId}::uuid`);
 
-        // 2. Insert into subscription table using raw SQL for the userId
-        await tx
-          .insert(subscription)
-          .values({
-            stripeSubscriptionId: stripeSubscription.id,
-            status: stripeSubscription.status,
-            priceId: process.env.STRIPE_PRICE_ID!,
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-            userId: sql`${metadata.userId}::uuid`
-          } as unknown as NewSubscription);
+        console.log('Updated user subscription status');
+
+        // 2. Insert into subscription table using raw SQL for UUID handling
+        await tx.execute(
+          sql`
+            INSERT INTO "Subscription" (
+              "userId",
+              "stripeSubscriptionId",
+              "status",
+              "priceId",
+              "currentPeriodStart",
+              "currentPeriodEnd"
+            ) VALUES (
+              ${metadata.userId}::uuid,
+              ${stripeSubscription.id},
+              ${stripeSubscription.status},
+              ${process.env.STRIPE_PRICE_ID},
+              ${new Date(stripeSubscription.current_period_start * 1000)},
+              ${new Date(stripeSubscription.current_period_end * 1000)}
+            )
+          `
+        );
+
+        console.log('Created subscription record');
       });
 
-      // Verify the update
-      const updatedUser = await db
+      // Verify the updates
+      const [updatedUser] = await db
         .select()
         .from(user)
         .where(sql`${user.id} = ${metadata.userId}::uuid`);
 
       console.log('Verified user data after update:', {
-        id: updatedUser[0].id,
-        subscriptionStatus: updatedUser[0].subscriptionStatus,
-        stripeCustomerId: updatedUser[0].stripeCustomerId
+        id: updatedUser.id,
+        subscriptionStatus: updatedUser.subscriptionStatus,
+        stripeCustomerId: updatedUser.stripeCustomerId
+      });
+
+      const [subscriptionRecord] = await db
+        .select()
+        .from(subscription)
+        .where(sql`${subscription.userId} = ${metadata.userId}::uuid`);
+
+      console.log('Verified subscription record:', {
+        id: subscriptionRecord.id,
+        status: subscriptionRecord.status,
+        stripeSubscriptionId: subscriptionRecord.stripeSubscriptionId
       });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Webhook error:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Webhook handler failed" },
       { status: 500 }

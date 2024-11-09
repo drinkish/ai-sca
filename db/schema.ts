@@ -29,12 +29,10 @@ export const subscription = pgTable('Subscription', {
   id: uuid('id').primaryKey().notNull().defaultRandom(),
   userId: uuid('userId').notNull().references(() => user.id),
   stripeSubscriptionId: varchar('stripeSubscriptionId', { length: 255 }).notNull(),
-  status: varchar('status', { length: 50 }).notNull(),
+  status: varchar('status', { length: 255 }).notNull(),
   priceId: varchar('priceId', { length: 255 }).notNull(),
-  currentPeriodStart: timestamp('currentPeriodStart').notNull(),
-  currentPeriodEnd: timestamp('currentPeriodEnd').notNull(),
-  createdAt: timestamp('createdAt').notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  currentPeriodStart: timestamp('currentPeriodStart', { mode: 'date' }).notNull(),
+  currentPeriodEnd: timestamp('currentPeriodEnd', { mode: 'date' }).notNull()
 });
 
 // Add subscription types
