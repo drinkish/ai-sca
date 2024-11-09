@@ -1,28 +1,31 @@
 'use client';
 
 import { Loader2 } from "lucide-react";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 
 import { Button } from "@/components/ui/button";
 
 export default function SubscriptionClient() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
   
-  // Handle redirect status
+  // Handle redirect status and session refresh
   useEffect(() => {
     if (searchParams.get('success')) {
-      // You might want to refresh the session here to get updated subscription status
-      setError(null);
+      // Refresh the session to get updated subscription status
+      updateSession();
+      // Optionally remove the query params
+      router.replace('/subscription');
     }
     if (searchParams.get('canceled')) {
       setError('Payment canceled. Please try again.');
     }
-  }, [searchParams]);
+  }, [searchParams, updateSession, router]);
 
   const handleSubscribe = async () => {
     setIsLoading(true);
@@ -53,6 +56,7 @@ export default function SubscriptionClient() {
     }
   };
 
+  // Loading state
   if (status === 'loading') {
     return (
       <div className="flex justify-center items-center min-h-[200px] pt-20">
@@ -61,21 +65,35 @@ export default function SubscriptionClient() {
     );
   }
 
+  // Check if user has active subscription
+  const isSubscribed = session?.user?.subscriptionStatus === 'active';
+
   return (
     <div className="max-w-2xl mx-auto p-6 mt-16 space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-3xl font-bold">Subscription</h1>
         
-        {/* Success message */}
-        {searchParams.get('success') && (
-          <div className="p-4 bg-green-50 text-green-700 rounded-lg">
-            <p className="font-medium">Thank you for subscribing! Your subscription is now active.</p>
-          </div>
-        )}
-        
-        {session?.user?.subscriptionStatus === 'active' ? (
-          <div className="p-4 bg-green-50 text-green-700 rounded-lg">
-            <p className="font-medium">You have an active subscription.</p>
+        {isSubscribed ? (
+          <div className="p-8 bg-white rounded-lg shadow-sm border space-y-4">
+            <div className="p-4 bg-green-50 text-green-700 rounded-lg">
+              <p className="font-medium">You have an active subscription!</p>
+            </div>
+            <div className="text-gray-600">
+              <h2 className="text-xl font-semibold mb-4">Premium Features Unlocked</h2>
+              <ul className="text-left space-y-2">
+                <li>✓ Access to all premium features</li>
+                <li>✓ Advanced capabilities</li>
+                <li>✓ Priority support</li>
+              </ul>
+            </div>
+            {/* You could add subscription management options here */}
+            {/* <Button
+              onClick={() => router.push('/account/billing')}
+              variant="outline"
+              className="mt-4"
+            >
+              Manage Subscription
+            </Button> */}
           </div>
         ) : (
           <div className="space-y-6">
