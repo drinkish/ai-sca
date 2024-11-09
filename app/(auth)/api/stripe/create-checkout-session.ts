@@ -53,11 +53,7 @@ export async function POST() {
           quantity: 1,
         },
       ],
-      // If they already have a Stripe customer ID, use it
-      ...(currentUser.stripeCustomerId 
-        ? { customer: currentUser.stripeCustomerId }
-        : { customer_email: currentUser.email }
-      ),
+      customer_email: currentUser.email,
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
       metadata: {
@@ -65,6 +61,9 @@ export async function POST() {
       },
       billing_address_collection: "required",
       allow_promotion_codes: true,
+      automatic_tax: {
+        enabled: true
+      }
     });
 
     if (!checkoutSession?.url) {
