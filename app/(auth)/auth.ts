@@ -3,6 +3,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import { getUser, getSubscription } from "@/db/queries";
+
 import { authConfig } from "./auth.config";
 
 const handler = NextAuth({
