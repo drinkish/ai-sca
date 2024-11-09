@@ -43,28 +43,52 @@ export async function POST() {
 
     const currentUser = users[0];
 
-    // Create checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: process.env.STRIPE_PRICE_ID,
-          quantity: 1,
-        },
-      ],
-      customer_email: currentUser.email,
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
-      metadata: {
-        userId: session.user.id,
-      },
-      billing_address_collection: "required",
-      allow_promotion_codes: true,
-      automatic_tax: {
-        enabled: true
-      }
-    });
+    // Create checkout session with conditional customer identification
+    const checkoutSession = await stripe.checkout.sessions.create(
+      currentUser.stripeCustomerId
+        ? {
+            mode: "subscription",
+            payment_method_types: ["card"],
+            customer: currentUser.stripeCustomerId,
+            line_items: [
+              {
+                price: process.env.STRIPE_PRICE_ID,
+                quantity: 1,
+              },
+            ],
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
+            metadata: {
+              userId: session.user.id,
+            },
+            billing_address_collection: "required",
+            allow_promotion_codes: true,
+            automatic_tax: {
+              enabled: true
+            }
+          }
+        : {
+            mode: "subscription",
+            payment_method_types: ["card"],
+            customer_email: currentUser.email,
+            line_items: [
+              {
+                price: process.env.STRIPE_PRICE_ID,
+                quantity: 1,
+              },
+            ],
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
+            metadata: {
+              userId: session.user.id,
+            },
+            billing_address_collection: "required",
+            allow_promotion_codes: true,
+            automatic_tax: {
+              enabled: true
+            }
+          }
+    );
 
     if (!checkoutSession?.url) {
       throw new Error("Failed to create checkout session");
