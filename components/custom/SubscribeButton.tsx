@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function SubscribeButton() {
@@ -53,7 +53,8 @@ export function SubscribeButton() {
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
-            <span className="animate-spin">⚪</span> Processing...
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Processing...
           </div>
         ) : (
           "Subscribe Now"
