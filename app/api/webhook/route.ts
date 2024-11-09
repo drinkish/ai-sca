@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { updateUserSubscription } from "@/db/queries";
 
+// This is the new way to configure API routes in Next.js App Router
+export const runtime = 'nodejs';
+// Configure to not parse the body as JSON since we need the raw body for Stripe
+export const dynamic = 'force-dynamic';
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -74,10 +79,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-// Configure the runtime to handle Stripe webhooks properly
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
