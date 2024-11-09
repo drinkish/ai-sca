@@ -1,22 +1,9 @@
 import { compare } from "bcrypt-ts";
-import NextAuth, { DefaultSession, User } from "next-auth";
+import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-import { getUser } from "@/db/queries";
-
+import { getUser, getSubscription } from "@/db/queries";
 import { authConfig } from "./auth.config";
-
-declare module "next-auth" {
-  interface Session extends DefaultSession {
-    user: {
-      id: string;
-      email: string;
-      stripeCustomerId?: string | null;
-      subscriptionStatus: string;
-      subscriptionEndDate?: Date | null;
-    } & DefaultSession["user"];
-  }
-}
 
 const handler = NextAuth({
   ...authConfig,
@@ -26,7 +13,7 @@ const handler = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials: Partial<Record<"email" | "password", unknown>>, request: Request): Promise<User | null> {
+      async authorize(credentials: Partial<Record<"email" | "password", unknown>>, request: Request) {
         const email = credentials?.email;
         const password = credentials?.password;
         
@@ -40,7 +27,16 @@ const handler = NextAuth({
         const passwordsMatch = await compare(password, users[0].password);
         if (passwordsMatch) {
           const { password: _, ...userWithoutPassword } = users[0];
-          return userWithoutPassword;
+          
+          // Get subscription data
+          const subscriptionData = await getSubscription(userWithoutPassword.id);
+          
+          // Return user with subscription data
+          return {
+            ...userWithoutPassword,
+            subscriptionStatus: subscriptionData?.status ?? 'inactive',
+            subscriptionEndDate: subscriptionData?.currentPeriodEnd ?? null
+          };
         }
       
         return null;
@@ -52,9 +48,9 @@ const handler = NextAuth({
       if (user) {
         token.id = user.id;
         token.email = user.email;
-        token.stripeCustomerId = user.stripeCustomerId ?? null;
-        token.subscriptionStatus = user.subscriptionStatus ?? 'inactive';
-        token.subscriptionEndDate = user.subscriptionEndDate ?? null;
+        token.stripeCustomerId = user.stripeCustomerId;
+        token.subscriptionStatus = user.subscriptionStatus;
+        token.subscriptionEndDate = user.subscriptionEndDate;
       }
       return token;
     },
@@ -63,7 +59,7 @@ const handler = NextAuth({
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.stripeCustomerId = token.stripeCustomerId as string | null;
-        session.user.subscriptionStatus = token.subscriptionStatus as string;
+        session.user.subscriptionStatus = (token.subscriptionStatus as string) ?? 'inactive';
         session.user.subscriptionEndDate = token.subscriptionEndDate as Date | null;
       }
       return session;

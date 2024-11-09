@@ -3,7 +3,7 @@
 import { genSaltSync, hashSync } from "bcrypt-ts";
 import { desc, eq } from "drizzle-orm";
 import { db } from "./index";
-import { user, chat, User } from "./schema";
+import { user, chat, subscription, User } from "./schema";
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
@@ -22,9 +22,7 @@ export async function createUser(email: string, password: string) {
     return await db.insert(user).values({ 
       email, 
       password: hash,
-      stripeCustomerId: null,
-      subscriptionStatus: 'inactive',
-      subscriptionEndDate: null
+      stripeCustomerId: null
     });
   } catch (error) {
     console.error("Failed to create user in database");
@@ -32,58 +30,81 @@ export async function createUser(email: string, password: string) {
   }
 }
 
-export async function updateUserSubscription(
-  userId: string, 
-  stripeCustomerId: string, 
-  subscriptionStatus: string, 
-  subscriptionEndDate: Date
-) {
+export async function updateUserStripeId(userId: string, stripeCustomerId: string) {
   try {
     return await db.update(user)
-      .set({ 
-        stripeCustomerId, 
-        subscriptionStatus, 
-        subscriptionEndDate 
-      })
+      .set({ stripeCustomerId })
       .where(eq(user.id, userId));
   } catch (error) {
-    console.error("Failed to update user subscription in database");
+    console.error("Failed to update user stripe ID in database", error);
     throw error;
   }
 }
 
-export async function saveChat({
-  id,
-  messages,
+export async function getSubscription(userId: string) {
+  try {
+    const [userSubscription] = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.userId, userId));
+    return userSubscription;
+  } catch (error) {
+    console.error("Failed to get subscription from database", error);
+    throw error;
+  }
+}
+
+export async function upsertSubscription({
   userId,
+  stripeSubscriptionId,
+  status,
+  priceId,
+  currentPeriodStart,
+  currentPeriodEnd
 }: {
-  id: string;
-  messages: any;
   userId: string;
+  stripeSubscriptionId: string;
+  status: string;
+  priceId: string;
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
 }) {
   try {
-    const selectedChats = await db.select().from(chat).where(eq(chat.id, id));
+    const existingSub = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.userId, userId));
 
-    if (selectedChats.length > 0) {
+    if (existingSub.length > 0) {
       return await db
-        .update(chat)
+        .update(subscription)
         .set({
-          messages: JSON.stringify(messages),
+          stripeSubscriptionId,
+          status,
+          priceId,
+          currentPeriodStart,
+          currentPeriodEnd
         })
-        .where(eq(chat.id, id));
+        .where(eq(subscription.userId, userId));
     }
 
-    return await db.insert(chat).values({
-      id,
-      createdAt: new Date(),
-      messages: JSON.stringify(messages),
-      userId,
-    });
+    return await db
+      .insert(subscription)
+      .values({
+        userId,
+        stripeSubscriptionId,
+        status,
+        priceId,
+        currentPeriodStart,
+        currentPeriodEnd
+      });
   } catch (error) {
-    console.error("Failed to save chat in database");
+    console.error("Failed to upsert subscription in database", error);
     throw error;
   }
 }
+
+// Keep all your existing chat-related functions as they are...
 
 export async function deleteChatById(id: string) {
   try {

@@ -1,11 +1,12 @@
 // app/api/stripe/webhook/route.ts
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { validate as isUUID } from 'uuid';
 
 import { db } from "@/db";
+import { updateUserStripeId, upsertSubscription } from "@/db/queries";
 import { user, subscription } from "@/db/schema";
 
 export const runtime = 'nodejs';
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
         throw new Error('Invalid or missing userId in session metadata');
       }
 
+      const userId = metadata.userId; // Store userId for type inference
+
       // Get the subscription details
       const stripeSubscription = await stripe.subscriptions.retrieve(
         checkoutSession.subscription as string
@@ -54,60 +57,56 @@ export async function POST(request: Request) {
         customerId: checkoutSession.customer
       });
 
-      // Begin transaction to update both tables
+      // Begin transaction to update both user and subscription
       await db.transaction(async (tx) => {
-        // 1. Update user table
+        // 1. Update user's Stripe customer ID
         await tx
           .update(user)
-          .set({
-            stripeCustomerId: checkoutSession.customer as string,
-            subscriptionStatus: stripeSubscription.status,
-            subscriptionEndDate: new Date(stripeSubscription.current_period_end * 1000)
+          .set({ stripeCustomerId: checkoutSession.customer as string })
+          .where(eq(user.id, userId));
+
+        console.log('Updated user stripe customer ID');
+
+        // 2. Create or update subscription
+        await tx
+          .insert(subscription)
+          .values({
+            userId,
+            stripeSubscriptionId: stripeSubscription.id,
+            status: stripeSubscription.status,
+            priceId: process.env.STRIPE_PRICE_ID!,
+            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
           })
-          .where(sql`${user.id} = ${metadata.userId}::uuid`);
+          .onConflictDoUpdate({
+            target: [subscription.userId],
+            set: {
+              stripeSubscriptionId: stripeSubscription.id,
+              status: stripeSubscription.status,
+              priceId: process.env.STRIPE_PRICE_ID!,
+              currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+              currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
+            }
+          });
 
-        console.log('Updated user subscription status');
-
-        // 2. Insert into subscription table using raw SQL for UUID handling
-        await tx.execute(
-          sql`
-            INSERT INTO "Subscription" (
-              "userId",
-              "stripeSubscriptionId",
-              "status",
-              "priceId",
-              "currentPeriodStart",
-              "currentPeriodEnd"
-            ) VALUES (
-              ${metadata.userId}::uuid,
-              ${stripeSubscription.id},
-              ${stripeSubscription.status},
-              ${process.env.STRIPE_PRICE_ID},
-              ${new Date(stripeSubscription.current_period_start * 1000)},
-              ${new Date(stripeSubscription.current_period_end * 1000)}
-            )
-          `
-        );
-
-        console.log('Created subscription record');
+        console.log('Upserted subscription record');
       });
 
-      // Verify the updates
+      // Verify the updates (optional, but good for debugging)
       const [updatedUser] = await db
         .select()
         .from(user)
-        .where(sql`${user.id} = ${metadata.userId}::uuid`);
+        .where(eq(user.id, userId));
 
       console.log('Verified user data after update:', {
         id: updatedUser.id,
-        subscriptionStatus: updatedUser.subscriptionStatus,
         stripeCustomerId: updatedUser.stripeCustomerId
       });
 
       const [subscriptionRecord] = await db
         .select()
         .from(subscription)
-        .where(sql`${subscription.userId} = ${metadata.userId}::uuid`);
+        .where(eq(subscription.userId, userId));
 
       console.log('Verified subscription record:', {
         id: subscriptionRecord.id,

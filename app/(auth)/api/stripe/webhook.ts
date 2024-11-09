@@ -1,17 +1,17 @@
 import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { Stripe } from 'stripe';
 
-// Local imports
-import { db } from '@/db'; // Updated import
+import { db } from '@/db';
 import { subscription, user } from '@/db/schema';
-import { stripe } from '@/lib/stripe.js';
+import { stripe } from '@/lib/stripe';
 
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = headers().get('stripe-signature') as string;
 
-  let event;
+  let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -19,38 +19,53 @@ export async function POST(req: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (err: any) {
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+  } catch (err) {
+    return NextResponse.json(
+      { error: `Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}` }, 
+      { status: 400 }
+    );
   }
 
-  const session = event.data.object as any;
+  const session = event.data.object as Stripe.Checkout.Session | Stripe.Invoice;
 
-  switch (event.type) {
-    case 'checkout.session.completed':
-      if (session.mode === 'subscription') {
-        const subscriptionId = session.subscription;
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const checkoutSession = session as Stripe.Checkout.Session;
+        if (checkoutSession.mode === 'subscription') {
+          const subscriptionId = checkoutSession.subscription as string;
+          await saveSubscription(
+            subscriptionId,
+            checkoutSession.customer as string,
+            true
+          );
+        }
+        break;
+      }
+
+      case 'invoice.payment_succeeded': {
+        const invoice = session as Stripe.Invoice;
+        const subscriptionId = invoice.subscription as string;
         await saveSubscription(
           subscriptionId,
-          session.customer as string,
-          true
+          invoice.customer as string,
+          false
         );
+        break;
       }
-      break;
 
-    case 'invoice.payment_succeeded':
-      const subscriptionId = session.subscription;
-      await saveSubscription(
-        subscriptionId,
-        session.customer as string,
-        false
-      );
-      break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
 
-    default:
-      console.log(`Unhandled event type ${event.type}`);
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return NextResponse.json(
+      { error: 'Webhook handler failed' },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ received: true });
 }
 
 async function saveSubscription(
@@ -58,36 +73,50 @@ async function saveSubscription(
   customerId: string,
   createAction = false
 ) {
-  const dbUser = await db.select().from(user).where(eq(user.stripeCustomerId, customerId)).execute();
+  try {
+    // Find user by Stripe customer ID
+    const [dbUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.stripeCustomerId, customerId));
 
-  if (!dbUser[0]) {
-    console.error('User not found with Stripe Customer ID:', customerId);
-    return;
+    if (!dbUser) {
+      throw new Error(`User not found with Stripe Customer ID: ${customerId}`);
+    }
+
+    // Get subscription details from Stripe
+    const subscriptionData = await stripe.subscriptions.retrieve(subscriptionId);
+
+    // Prepare subscription data
+    const subscriptionInfo = {
+      userId: dbUser.id,
+      stripeSubscriptionId: subscriptionId,
+      status: subscriptionData.status,
+      priceId: subscriptionData.items.data[0].price.id,
+      currentPeriodStart: new Date(subscriptionData.current_period_start * 1000),
+      currentPeriodEnd: new Date(subscriptionData.current_period_end * 1000),
+    };
+
+    // Begin transaction
+    await db.transaction(async (tx) => {
+      if (createAction) {
+        // Insert new subscription
+        await tx
+          .insert(subscription)
+          .values(subscriptionInfo);
+      } else {
+        // Update existing subscription
+        await tx
+          .update(subscription)
+          .set(subscriptionInfo)
+          .where(eq(subscription.stripeSubscriptionId, subscriptionId));
+      }
+
+      // No need to update user table as we're using the subscription table for status
+    });
+
+  } catch (error) {
+    console.error('Error saving subscription:', error);
+    throw error;
   }
-
-  const subscriptionData = await stripe.subscriptions.retrieve(subscriptionId);
-
-  const subscriptionInfo = {
-    userId: dbUser[0].id,
-    stripeSubscriptionId: subscriptionId,
-    status: subscriptionData.status,
-    priceId: subscriptionData.items.data[0].price.id,
-    currentPeriodStart: new Date(subscriptionData.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscriptionData.current_period_end * 1000),
-  };
-
-  if (createAction) {
-    await db.insert(subscription).values(subscriptionInfo).execute();
-  } else {
-    await db.update(subscription)
-      .set(subscriptionInfo)
-      .where(eq(subscription.stripeSubscriptionId, subscriptionId))
-      .execute();
-  }
-
-  // Update user's subscription status
-  await db.update(user)
-    .set({ subscriptionStatus: subscriptionData.status })
-    .where(eq(user.id, dbUser[0].id))
-    .execute();
 }
