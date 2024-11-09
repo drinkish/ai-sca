@@ -6,6 +6,11 @@ import { authConfig } from '@/app/(auth)/auth.config';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  // Skip auth check for Stripe webhook
+  if (request.nextUrl.pathname === '/api/stripe/webhook') {
+    return NextResponse.next();
+  }
+
   const session = await auth();
 
   // Check if the route is protected (chat or sca-generator)
@@ -44,5 +49,15 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/chat/:path*', '/sca-generator/:path*', '/api/:path*', '/login', '/register', '/subscription'],
+  // Update matcher to be more specific and exclude the webhook path
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/stripe/webhook (webhook endpoint)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api/stripe/webhook|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
