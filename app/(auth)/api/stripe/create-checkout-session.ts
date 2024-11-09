@@ -1,48 +1,82 @@
-import { eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
+// app/api/stripe/create-checkout-session/route.ts
+import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
 
-import { auth } from '@/app/(auth)/auth';
-import { db } from '@/db'; // Updated import
-import { user } from '@/db/schema';
-import { stripe } from '@/lib/stripe';
+import { auth } from "@/app/(auth)/auth";
+import { db } from "@/db";
+import { user } from "@/db/schema";
+import { stripe } from "@/lib/stripe";
 
-export async function POST(req: Request) {
+export async function POST() {
   try {
+    // Verify environment variables
+    if (!process.env.STRIPE_PRICE_ID) {
+      throw new Error("Missing STRIPE_PRICE_ID");
+    }
+
+    if (!process.env.NEXT_PUBLIC_APP_URL) {
+      throw new Error("Missing NEXT_PUBLIC_APP_URL");
+    }
+
+    // Get user session
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
 
-    const { priceId } = await req.json();
+    // Get user from database
+    const users = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, session.user.id));
 
-    const dbUser = await db.select().from(user).where(eq(user.id, session.user.id)).execute();
-
-    if (!dbUser[0]) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!users.length) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
-    let stripeCustomerId = dbUser[0].stripeCustomerId;
+    const currentUser = users[0];
 
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: dbUser[0].email,
-      });
-      stripeCustomerId = customer.id;
-      await db.update(user).set({ stripeCustomerId }).where(eq(user.id, dbUser[0].id)).execute();
-    }
-
+    // Create checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_URL}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/subscription?canceled=true`,
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: process.env.STRIPE_PRICE_ID,
+          quantity: 1,
+        },
+      ],
+      // If they already have a Stripe customer ID, use it
+      ...(currentUser.stripeCustomerId 
+        ? { customer: currentUser.stripeCustomerId }
+        : { customer_email: currentUser.email }
+      ),
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
+      metadata: {
+        userId: session.user.id,
+      },
+      billing_address_collection: "required",
+      allow_promotion_codes: true,
     });
 
-    return NextResponse.json({ sessionId: checkoutSession.id });
+    if (!checkoutSession?.url) {
+      throw new Error("Failed to create checkout session");
+    }
+
+    return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
-    console.error('Error in create-checkout-session:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("Checkout session error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }
