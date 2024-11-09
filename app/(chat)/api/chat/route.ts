@@ -2,7 +2,7 @@ import { convertToCoreMessages, Message, streamText } from "ai";
 
 import { customModel } from "@/ai";
 import { auth } from "@/app/(auth)/auth";
-import { deleteChatById, getChatById, saveChat } from "@/db/queries";
+import { deleteChatById, getChatById, insertChat, updateChat } from "@/db/queries";
 
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Array<Message> } =
@@ -29,11 +29,17 @@ export async function POST(request: Request) {
     onFinish: async ({ responseMessages }) => {
       if (session.user && session.user.id) {
         try {
-          await saveChat({
-            id,
-            messages: [...coreMessages, ...responseMessages],
-            userId: session.user.id,
-          });
+          const existingChat = await getChatById(id);
+          
+          if (existingChat) {
+            await updateChat(id, [...coreMessages, ...responseMessages]);
+          } else {
+            await insertChat({
+              id,
+              messages: [...coreMessages, ...responseMessages],
+              userId: session.user.id,
+            });
+          }
         } catch (error) {
           console.error("Failed to save chat");
         }
@@ -59,7 +65,7 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const chat = await getChatById(id); // Updated: passing id directly instead of as an object
+    const chat = await getChatById(id);
 
     if (!chat) {
       return new Response("Chat not found", { status: 404 });
@@ -69,7 +75,7 @@ export async function DELETE(request: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    await deleteChatById(id); // Updated: passing id directly instead of as an object
+    await deleteChatById(id);
 
     return new Response("Chat deleted", { status: 200 });
   } catch (error) {

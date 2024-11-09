@@ -5,6 +5,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "./index";
 import { user, chat, subscription, User } from "./schema";
 
+// User-related queries
 export async function getUser(email: string): Promise<Array<User>> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
@@ -30,6 +31,7 @@ export async function createUser(email: string, password: string) {
   }
 }
 
+// Subscription-related queries
 export async function updateUserStripeId(userId: string, stripeCustomerId: string) {
   try {
     return await db.update(user)
@@ -104,7 +106,42 @@ export async function upsertSubscription({
   }
 }
 
-// Keep all your existing chat-related functions as they are...
+// Chat-related queries
+export async function insertChat({
+  id,
+  messages,
+  userId,
+}: {
+  id: string;
+  messages: any;
+  userId: string;
+}) {
+  try {
+    return await db.insert(chat).values({
+      id,
+      createdAt: new Date(),
+      messages: JSON.stringify(messages),
+      userId,
+    });
+  } catch (error) {
+    console.error("Failed to insert chat in database");
+    throw error;
+  }
+}
+
+export async function updateChat(id: string, messages: any) {
+  try {
+    return await db
+      .update(chat)
+      .set({
+        messages: JSON.stringify(messages),
+      })
+      .where(eq(chat.id, id));
+  } catch (error) {
+    console.error("Failed to update chat in database");
+    throw error;
+  }
+}
 
 export async function deleteChatById(id: string) {
   try {
