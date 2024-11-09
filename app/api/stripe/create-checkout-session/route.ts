@@ -62,10 +62,7 @@ export async function POST() {
               userId: session.user.id,
             },
             billing_address_collection: "required",
-            allow_promotion_codes: true,
-            automatic_tax: {
-              enabled: true
-            }
+            allow_promotion_codes: true
           }
         : {
             mode: "subscription",
@@ -83,10 +80,7 @@ export async function POST() {
               userId: session.user.id,
             },
             billing_address_collection: "required",
-            allow_promotion_codes: true,
-            automatic_tax: {
-              enabled: true
-            }
+            allow_promotion_codes: true
           }
     );
 
