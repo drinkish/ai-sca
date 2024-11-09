@@ -1,9 +1,9 @@
 'use client';
 
 import { Loader2 } from "lucide-react";
+import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 
 import { Button } from "@/components/ui/button";
 
