@@ -2,6 +2,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+
 import { updateUserSubscription } from "@/db/queries";
 
 // This is the new way to configure API routes in Next.js App Router
