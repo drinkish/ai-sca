@@ -2,7 +2,8 @@
 
 import { Loader2 } from "lucide-react";
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,18 @@ export default function SubscriptionClient() {
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  
+  // Handle redirect status
+  useEffect(() => {
+    if (searchParams.get('success')) {
+      // You might want to refresh the session here to get updated subscription status
+      setError(null);
+    }
+    if (searchParams.get('canceled')) {
+      setError('Payment canceled. Please try again.');
+    }
+  }, [searchParams]);
 
   const handleSubscribe = async () => {
     setIsLoading(true);
@@ -31,7 +44,6 @@ export default function SubscriptionClient() {
         throw new Error("No checkout URL received");
       }
 
-      // Redirect to Stripe's hosted checkout page
       window.location.assign(url);
     } catch (error) {
       console.error('Error:', error);
@@ -43,16 +55,23 @@ export default function SubscriptionClient() {
 
   if (status === 'loading') {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
+      <div className="flex justify-center items-center min-h-[200px] pt-20">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-8">
+    <div className="max-w-2xl mx-auto p-6 mt-16 space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-3xl font-bold">Subscription</h1>
+        
+        {/* Success message */}
+        {searchParams.get('success') && (
+          <div className="p-4 bg-green-50 text-green-700 rounded-lg">
+            <p className="font-medium">Thank you for subscribing! Your subscription is now active.</p>
+          </div>
+        )}
         
         {session?.user?.subscriptionStatus === 'active' ? (
           <div className="p-4 bg-green-50 text-green-700 rounded-lg">
@@ -69,8 +88,9 @@ export default function SubscriptionClient() {
               <Button
                 onClick={handleSubscribe}
                 disabled={isLoading}
+                variant="default"
                 size="lg"
-                className="w-full"
+                className="w-full bg-black hover:bg-gray-800"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
