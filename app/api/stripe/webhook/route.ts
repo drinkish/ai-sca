@@ -1,12 +1,11 @@
 // app/api/stripe/webhook/route.ts
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { db } from "@/db";
 import { user } from "@/db/schema";
-
-import { eq } from "drizzle-orm";
 
 // Use the new route segment config
 export const runtime = 'nodejs';
