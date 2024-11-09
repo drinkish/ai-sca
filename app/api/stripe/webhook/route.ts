@@ -4,10 +4,11 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { validate as isUUID } from 'uuid';
+
 import { db } from "@/db";
 import { user, subscription, type NewSubscription } from "@/db/schema";
 
-import { validate as isUUID } from 'uuid';
 
 export const runtime = 'nodejs';
 
