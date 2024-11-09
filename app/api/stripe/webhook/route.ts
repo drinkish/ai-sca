@@ -7,30 +7,32 @@ import Stripe from "stripe";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 
-// Use the new route segment config
+// Configure the runtime
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+
+// Disable body parsing, must be raw for Stripe
+export const preferredRegion = 'home';
+export const maxDuration = 60;
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.text();
-    const signature = headers().get("Stripe-Signature");
+    const body = await request.text();
+    const headersList = headers();
+    const signature = headersList.get("Stripe-Signature");
 
     if (!signature) {
-      console.error("No stripe signature found");
+      console.error("⚠️ No Stripe signature found");
       return NextResponse.json(
         { error: "No signature" },
         { status: 400 }
       );
     }
 
-    console.log("Received webhook", signature.substring(0, 20) + "...");
-
+    // Verify the event
     let event: Stripe.Event;
-
     try {
       event = stripe.webhooks.constructEvent(
         body,
@@ -38,88 +40,51 @@ export async function POST(req: Request) {
         webhookSecret
       );
     } catch (err) {
-      console.error("Webhook signature verification failed:", err);
+      console.error("⚠️ Webhook signature verification failed:", err);
       return NextResponse.json(
-        { error: "Webhook signature verification failed" },
+        { error: "Invalid signature" },
         { status: 400 }
       );
     }
 
-    console.log("Webhook event type:", event.type);
+    console.log(`✅ Verified webhook: ${event.type}`);
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
-        console.log("Processing checkout session:", session.id);
-        
-        if (!session?.metadata?.userId) {
-          console.error("No userId in session metadata");
-          return NextResponse.json(
-            { error: "No userId in session metadata" },
-            { status: 400 }
-          );
-        }
-
-        // Get subscription
-        const subscription = await stripe.subscriptions.retrieve(
-          session.subscription as string
-        );
-
-        console.log("Updating user subscription status:", {
-          userId: session.metadata.userId,
-          status: subscription.status,
-        });
-
-        // Update user
-        await db
-          .update(user)
-          .set({
-            stripeCustomerId: session.customer as string,
-            subscriptionStatus: subscription.status,
-            subscriptionEndDate: new Date(subscription.current_period_end * 1000)
-          })
-          .where(eq(user.id, session.metadata.userId));
-
-        console.log("Successfully updated user subscription");
-        break;
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log(`Processing checkout session: ${session.id}`);
+      
+      // Verify we have the required data
+      if (!session?.metadata?.userId) {
+        throw new Error('No userId in session metadata');
       }
 
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        
-        if (!subscription.metadata.userId) {
-          console.error("No userId in subscription metadata");
-          return NextResponse.json(
-            { error: "No userId in subscription metadata" },
-            { status: 400 }
-          );
-        }
-
-        console.log("Updating subscription status:", {
-          userId: subscription.metadata.userId,
-          status: subscription.status,
-        });
-
-        // Update user
-        await db
-          .update(user)
-          .set({
-            subscriptionStatus: subscription.status,
-            subscriptionEndDate: new Date(subscription.current_period_end * 1000)
-          })
-          .where(eq(user.id, subscription.metadata.userId));
-
-        console.log("Successfully updated subscription status");
-        break;
+      if (!session.subscription) {
+        throw new Error('No subscription in session');
       }
+
+      // Get the subscription details
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      );
+
+      // Update the user's subscription status
+      await db
+        .update(user)
+        .set({
+          stripeCustomerId: session.customer as string,
+          subscriptionStatus: subscription.status,
+          subscriptionEndDate: new Date(subscription.current_period_end * 1000)
+        })
+        .where(eq(user.id, session.metadata.userId));
+
+      console.log(`✅ Updated subscription for user: ${session.metadata.userId}`);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error('Webhook error:', error);
     return NextResponse.json(
-      { error: "Webhook handler failed" },
+      { error: error instanceof Error ? error.message : "Webhook handler failed" },
       { status: 500 }
     );
   }
