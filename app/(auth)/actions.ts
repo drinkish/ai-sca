@@ -6,6 +6,7 @@ import { createUser, getUser } from "@/db/queries";
 
 import { signIn } from "./auth";
 
+
 const authFormSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -24,6 +25,7 @@ export const login = async (
       email: formData.get("email"),
       password: formData.get("password"),
     });
+    console.log("Creating user...");
 
     await signIn("credentials", {
       email: validatedData.email,
@@ -61,11 +63,12 @@ export const register = async (
       password: formData.get("password"),
     });
 
-    let [user] = await getUser(validatedData.email);
-
+    // let [user] = await getUser(validatedData.email);
+    const user = false
     if (user) {
       return { status: "user_exists" } as RegisterActionState;
     } else {
+      console.log("Creating user...");
       await createUser(validatedData.email, validatedData.password);
       await signIn("credentials", {
         email: validatedData.email,

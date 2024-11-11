@@ -2,15 +2,17 @@
 
 import { genSaltSync, hashSync } from "bcrypt-ts";
 import { desc, eq } from "drizzle-orm";
-import { db } from "./index";
+
 import { user, chat, subscription, User } from "./schema";
+
+import { db } from "./index";
+
 
 // User-related queries
 export async function getUser(email: string): Promise<Array<User>> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
-    console.error("Failed to get user from database");
     throw error;
   }
 }
@@ -20,6 +22,8 @@ export async function createUser(email: string, password: string) {
   const hash = hashSync(password, salt);
 
   try {
+    console.log("Creating user right before...");
+    
     return await db.insert(user).values({ 
       email, 
       password: hash,
@@ -27,6 +31,7 @@ export async function createUser(email: string, password: string) {
     });
   } catch (error) {
     console.error("Failed to create user in database");
+    console.error(error);
     throw error;
   }
 }
