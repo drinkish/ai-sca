@@ -25,7 +25,6 @@ export const login = async (
       email: formData.get("email"),
       password: formData.get("password"),
     });
-    console.log("Creating user...");
 
     await signIn("credentials", {
       email: validatedData.email,

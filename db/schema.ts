@@ -13,7 +13,7 @@ export type User = InferSelectModel<typeof user>;
 
 export const subscription = pgTable('Subscription', {
   id: uuid('id').primaryKey().notNull().defaultRandom(),
-  userId: uuid('userId').notNull().references(() => user.id),
+  userId: uuid('userId').notNull().references(() => user.id).unique(),
   stripeSubscriptionId: varchar('stripeSubscriptionId', { length: 255 }).notNull(),
   status: varchar('status', { length: 255 }).notNull(),
   priceId: varchar('priceId', { length: 255 }).notNull(),
