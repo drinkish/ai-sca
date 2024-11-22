@@ -85,3 +85,20 @@ export const register = async (
     return { status: "failed" };
   }
 };
+
+export const registerWithGoogle = async (email: string, oAuthId: string): Promise<RegisterActionState> => {
+  try {
+    let [user] = await getUser(email);
+
+    if (user) {
+      return { status: "user_exists" } as RegisterActionState;
+    } else {
+      console.log("Creating Google user...");
+      await createUser(email, "", oAuthId); // Assuming createUser is updated to handle oAuthId
+      return { status: "success" };
+    }
+  } catch (error) {
+    console.error("Failed to register with Google", error);
+    return { status: "failed" };
+  }
+};

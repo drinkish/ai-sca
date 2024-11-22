@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
-import { Toaster } from "sonner";
 
 import { Navbar } from "@/components/custom/navbar";
 import { ThemeProvider } from "@/components/custom/theme-provider";
+import { Toaster } from "@/components/ui/toaster"
 
 import "./globals.css";
 
@@ -28,9 +28,9 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Toaster position="top-center" />
             <Navbar />
             {children}
+            <Toaster  />
           </ThemeProvider>
         </SessionProvider>
       </body>

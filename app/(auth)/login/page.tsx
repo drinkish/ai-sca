@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {signIn, getProviders} from 'next-auth/react'
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,6 +15,7 @@ export default function Page() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
+  const [providers, setProviders] = useState <any> (null)
 
   const [state, formAction] = useActionState<LoginActionState, FormData>(
     login,
@@ -31,6 +33,21 @@ export default function Page() {
       router.refresh();
     }
   }, [state.status, router]);
+
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        const availableProviders = await getProviders();
+        console.log('Available providers:', availableProviders);
+        setProviders(availableProviders);
+      } catch (error) {
+        console.error('Error fetching providers:', error);
+        toast.error('Failed to load authentication providers');
+      }
+    };
+
+    fetchProviders();
+  }, []);
 
   const handleSubmit = (formData: FormData) => {
     setEmail(formData.get("email") as string);
@@ -59,6 +76,17 @@ export default function Page() {
             {" for free."}
           </p>
         </AuthForm>
+        {providers && Object.values(providers).map((provider: any) => (
+          provider.name === "Google" && (
+          <button
+            key={provider.name}
+            type="button"
+            title={provider.name}
+            onClick={() => signIn(provider.id)}
+          >
+            Sign in with {provider.name}
+          </button>)
+        ))}
       </div>
     </div>
   );
