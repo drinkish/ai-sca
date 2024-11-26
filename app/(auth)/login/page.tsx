@@ -75,6 +75,15 @@ export default function Page() {
             </Link>
             {" for free."}
           </p>
+          <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
+            {"Don't remember your password? "}
+            <Link
+              href="/forgot-password"
+              className="font-semibold text-gray-800 hover:underline dark:text-zinc-200"
+            >
+              Forgot Password
+            </Link>
+          </p>
         </AuthForm>
         {providers && Object.values(providers).map((provider: any) => (
           provider.name === "Google" && (

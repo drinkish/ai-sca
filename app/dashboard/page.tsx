@@ -1,7 +1,8 @@
 'use client'
 
 import Link from "next/link"
-import { useState } from "react"
+import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
 
 import Billing from "@/components/custom/billing"
 import ChangeEmail from "@/components/custom/change-email"
@@ -11,10 +12,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { getUser } from "@/db/queries"
 
 
 export default function Dashboard() {
+
+  const {data: session} = useSession();
   const [activeTab, setActiveTab] = useState("account")
+  const [oAuthUser, setOAuthUser] = useState<boolean | null>(false);
+
+  useEffect(() => {
+    const isGoogleUser = async () => {
+      const [getUserDetails] =  await getUser(session?.user?.email!);
+      setOAuthUser(getUserDetails.oAuthId !== null);
+    }
+    isGoogleUser();
+  }, [])
 
   const tabContent : { [key: string]: React.ReactNode } = {
     // Add your tab content here
