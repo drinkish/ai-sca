@@ -1,14 +1,30 @@
 import { compare } from "bcrypt-ts";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
 import { getUser, getSubscription } from "@/db/queries";
 
+import { registerWithGoogle } from "./actions";
 import { authConfig } from "./auth.config";
 
 const handler = NextAuth({
   ...authConfig,
   providers: [
+    GoogleProvider({
+      profile(profile){
+        // console.log(profile);
+
+        return {
+          ...profile,
+          method: "google"
+        }
+        
+      },
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
+      
+    }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -25,7 +41,7 @@ const handler = NextAuth({
         const users = await getUser(email);
         if (users.length === 0) return null;
         
-        const passwordsMatch = await compare(password, users[0].password);
+        const passwordsMatch = await compare(password, users[0].password!);
         if (passwordsMatch) {
           const { password: _, ...userWithoutPassword } = users[0];
           
@@ -44,7 +60,38 @@ const handler = NextAuth({
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   callbacks: {
+
+    async signIn({ user }) {
+      
+      // Works when signed in via google.
+      if('method' in user && user?.method === 'google') {
+        
+        console.log("Google user logged in");
+        const email = user?.email;
+        const oAuthId = user?.id;
+        
+        if(typeof email !== 'string' || typeof oAuthId !== 'string') return false;
+
+        const users = await getUser(email);
+        
+        if (users.length === 0) {
+          console.log(`New user`);
+          
+          const res = await registerWithGoogle(email, oAuthId);
+          console.log(`response of signing in with google ${res}`);
+        }
+
+        return true;
+      }
+      
+      return true;
+    },
+    
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

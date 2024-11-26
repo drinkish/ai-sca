@@ -18,12 +18,13 @@ export const Navbar = async () => {
   return (
     <>
       <div className="bg-background absolute top-0 left-0 w-dvw py-2 px-3 justify-between flex flex-row items-center z-30">
+        {/* Topbar */}
         <div className="flex flex-row gap-3 items-center">
           <History user={session?.user} />
           <div className="flex flex-row gap-2 items-center">
           <Link href="/" className="text-sm dark:text-zinc-300 hover:underline">
-  AI Tutor
-</Link>
+            AI Tutor
+          </Link>
           </div>
           {/* Add SCA Generator link here */}
           <Link href="/sca-generator" className="text-sm hover:underline">
@@ -46,6 +47,11 @@ export const Navbar = async () => {
                 <ThemeToggle />
               </DropdownMenuItem>
               {/* Add SCA Generator link in dropdown menu as well */}
+              <DropdownMenuItem>
+                <Link href="/dashboard" className="w-full">
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link href="/sca-generator" className="w-full">
                   SCA Generator

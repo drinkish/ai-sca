@@ -5,7 +5,8 @@ import { pgTable, varchar, timestamp, json, uuid, text } from "drizzle-orm/pg-co
 export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull().unique(),
-  password: varchar("password", { length: 64 }).notNull(),
+  password: varchar("password", { length: 64 }), // Made non-nullable to accomodate OAuth/google users
+  oAuthId: text('o_auth_id'),
   stripeCustomerId: text('stripe_customer_id'),
 });
 
@@ -13,7 +14,7 @@ export type User = InferSelectModel<typeof user>;
 
 export const subscription = pgTable('Subscription', {
   id: uuid('id').primaryKey().notNull().defaultRandom(),
-  userId: uuid('userId').notNull().references(() => user.id),
+  userId: uuid('userId').notNull().references(() => user.id).unique(),
   stripeSubscriptionId: varchar('stripeSubscriptionId', { length: 255 }).notNull(),
   status: varchar('status', { length: 255 }).notNull(),
   priceId: varchar('priceId', { length: 255 }).notNull(),

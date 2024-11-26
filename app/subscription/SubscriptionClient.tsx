@@ -60,7 +60,7 @@ export default function SubscriptionClient() {
       if (!url) {
         throw new Error("No checkout URL received");
       }
-
+      
       window.location.assign(url);
     } catch (error) {
       console.error('Error:', error);

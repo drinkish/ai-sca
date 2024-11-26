@@ -10,6 +10,15 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === '/api/stripe/webhook') {
     return NextResponse.next();
   }
+  
+  if (request.nextUrl.pathname === '/forgot-password') {
+    return NextResponse.next();
+  }
+
+  // Allow any url that starts with /api/auth
+  if (request.nextUrl.pathname.match(/^\/api\/auth\/?.*$/)) {    
+    return NextResponse.next();
+  }
 
   const session = await auth();
 
