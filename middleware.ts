@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  if (request.nextUrl.pathname === '/forgot-password') {
+  if (request.nextUrl.pathname === '/forgot-password' || request.nextUrl.pathname === '/reset-password') {
     return NextResponse.next();
   }
 
