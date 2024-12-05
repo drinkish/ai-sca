@@ -16,7 +16,7 @@ function getPrompt(action: string, params: any): string {
       return `Your role is to help a GP ST3 trainee prepare for the final SCA exam in the UK. For this, one has to do a lot of roleplays to practice consultation skills. Your role is to generate a thorough scenario for a patient role player, that fits under the ${domain} category, related to ${additionalInfo}, and covers a wide range of diagnoses from the NICE CKS guidelines. You are to give the patient's name, age at the top, then their presenting complaint, history of presenting complaint, past medical history, drug history, and any other relevant information. To finish off, you will mention their ideas, concerns, and expectations and write the diagnosis that the GP should be working towards at the end. Make sure you use a wide range of conditions, not just the most common ones. Use markdown formatting.
 
 # Patient Details
-Generate a name from various ethnicities and age for a patient in the ${domain} category.
+Generate a name from various ethnicities and don't repeat the same name, and age for a patient in the ${domain} category.
 
 ## Presenting Complaint
 Detail the main symptoms related to ${additionalInfo}.

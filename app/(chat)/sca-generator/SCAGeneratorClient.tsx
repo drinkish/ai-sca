@@ -116,109 +116,153 @@ const SCAGeneratorClient: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <button 
-        onClick={handleGenerateRandomCase}
-        disabled={isPatientLoading}
-        className="bg-orange-500 text-white px-4 py-2 rounded disabled:opacity-50 w-full"
-      >
-        {isPatientLoading ? 'Generating...' : 'Generate Random Case'}
-      </button>
-      
-      <p className="text-center text-sm text-gray-500">
-        Generate a random case above or select a specific domain below
-      </p>
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
+      {/* Header Section */}
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold text-center">SCA Case Generator</h1>
+        <p className="text-center text-gray-600">Generate practice cases for your GP SCA exam preparation</p>
+      </div>
 
-      <div>
-        <label htmlFor="domain" className="block mb-2">Select Domain:</label>
-        <select 
-          id="domain"
-          value={domain} 
-          onChange={(e) => setDomain(e.target.value)}
-          className="w-full p-2 border rounded"
+      {/* Random Case Generator */}
+      <div className="bg-white rounded-lg shadow-sm p-6 space-y-4 border">
+        <button 
+          onClick={handleGenerateRandomCase}
+          disabled={isPatientLoading}
+          className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg disabled:opacity-50 w-full font-medium transition-all hover:from-orange-600 hover:to-orange-700 shadow-sm"
         >
-          <option value="">Select Domain</option>
-          <option value="patient-less-than-19-years-old">Patient less than 19 years old</option>
-          <option value="gender-reproductive-sexual-health">Gender, reproductive and sexual health, including women's, men's, LGBTQ+, gynaecology and breast</option>
-          <option value="long-term-condition">Long-term condition, including cancer, multi-morbidity, and disability</option>
-          <option value="older-adults">Older adults, including frailty and end of life care</option>
-          <option value="mental-health">Mental health, including addiction, alcohol and substance misuse</option>
-          <option value="urgent-unscheduled-care">Urgent and unscheduled care</option>
-          <option value="health-disadvantages-vulnerabilities">Health disadvantages and vulnerabilities, including veterans, mental capacity, safeguarding, and communication difficulties</option>
-          <option value="new-presentation-undifferentiated-disease">New presentation of undifferentiated disease</option>
-        </select>
+          {isPatientLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-white"></span>
+              Generating...
+            </span>
+          ) : 'Generate Random Case'}
+        </button>
+        
+        <p className="text-center text-sm text-gray-500">
+          Generate a random case above or customize your case below
+        </p>
       </div>
-      
-      <div>
-        <label htmlFor="additionalInfo" className="block mb-2">Additional Information:</label>
-        <textarea
-          id="additionalInfo"
-          value={additionalInfo}
-          onChange={(e) => setAdditionalInfo(e.target.value)}
-          placeholder="Enter additional information"
-          className="w-full p-2 border rounded"
-          rows={4}
-        />
+
+      {/* Case Configuration */}
+      <div className="bg-white rounded-lg shadow-sm p-6 space-y-6 border">
+        <div className="space-y-2">
+          <label htmlFor="domain" className="block text-sm font-medium text-gray-700">Domain</label>
+          <select 
+            id="domain"
+            value={domain} 
+            onChange={(e) => setDomain(e.target.value)}
+            className="w-full p-2.5 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Select Domain</option>
+            <option value="patient-less-than-19-years-old">Patient less than 19 years old</option>
+            <option value="gender-reproductive-sexual-health">Gender, reproductive and sexual health, including women's, men's, LGBTQ+, gynaecology and breast</option>
+            <option value="long-term-condition">Long-term condition, including cancer, multi-morbidity, and disability</option>
+            <option value="older-adults">Older adults, including frailty and end of life care</option>
+            <option value="mental-health">Mental health, including addiction, alcohol and substance misuse</option>
+            <option value="urgent-unscheduled-care">Urgent and unscheduled care</option>
+            <option value="health-disadvantages-vulnerabilities">Health disadvantages and vulnerabilities, including veterans, mental capacity, safeguarding, and communication difficulties</option>
+            <option value="new-presentation-undifferentiated-disease">New presentation of undifferentiated disease</option>
+          </select>
+        </div>
+        
+        <div className="space-y-2">
+          <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-700">Additional Information</label>
+          <textarea
+            id="additionalInfo"
+            value={additionalInfo}
+            onChange={(e) => setAdditionalInfo(e.target.value)}
+            placeholder="Enter any specific requirements or focus areas"
+            className="w-full p-2.5 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            rows={4}
+          />
+        </div>
       </div>
-      
-      <button 
-        onClick={handleGeneratePatientNotes}
-        disabled={isPatientLoading}
-        className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {isPatientLoading ? 'Generating...' : 'Generate Patient Notes'}
-      </button>
-      <div 
-        ref={patientNotesRef}
-        className="bg-gray-100 p-4 rounded text-left font-sans text-sm overflow-auto max-h-96"
-      >
-        <ReactMarkdown 
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          className="prose max-w-none"
-        >
-          {currentSection === 'patient' ? patientCompletion : patientNotes}
-        </ReactMarkdown>
-      </div>
-      
-      <button 
-        onClick={handleGenerateDoctorNotes} 
-        disabled={(!patientNotes && !patientCompletion) || isDoctorLoading}
-        className="bg-green-500 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {isDoctorLoading ? 'Generating...' : 'Generate Doctor\'s Notes'}
-      </button>
-      <div 
-        ref={doctorNotesRef}
-        className="bg-gray-100 p-4 rounded text-left font-sans text-sm overflow-auto max-h-96"
-      >
-        <ReactMarkdown 
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          className="prose max-w-none"
-        >
-          {currentSection === 'doctor' ? doctorCompletion : doctorNotes}
-        </ReactMarkdown>
-      </div>
-      
-      <button 
-        onClick={handleGenerateMarkScheme} 
-        disabled={(!doctorNotes && !doctorCompletion) || isMarkLoading}
-        className="bg-purple-500 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {isMarkLoading ? 'Generating...' : 'Generate Mark Scheme'}
-      </button>
-      <div 
-        ref={markSchemeRef}
-        className="bg-gray-100 p-4 rounded text-left font-sans text-sm overflow-auto max-h-96"
-      >
-        <ReactMarkdown 
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          className="prose max-w-none"
-        >
-          {currentSection === 'mark' ? markCompletion : markScheme}
-        </ReactMarkdown>
+
+      {/* Generated Content Sections */}
+      <div className="space-y-8">
+        {/* Patient Notes Section */}
+        <div className="space-y-4">
+          <button 
+            onClick={handleGeneratePatientNotes}
+            disabled={isPatientLoading}
+            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg disabled:opacity-50 font-medium transition-all hover:from-blue-600 hover:to-blue-700 shadow-sm"
+          >
+            {isPatientLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-white"></span>
+                Generating...
+              </span>
+            ) : 'Generate Patient Notes'}
+          </button>
+          <div 
+            ref={patientNotesRef}
+            className="bg-white p-6 rounded-lg shadow-sm border"
+          >
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              className="prose max-w-none prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-p:text-gray-600 prose-strong:text-gray-900"
+            >
+              {currentSection === 'patient' ? patientCompletion : patientNotes}
+            </ReactMarkdown>
+          </div>
+        </div>
+
+        {/* Doctor Notes Section */}
+        <div className="space-y-4">
+          <button 
+            onClick={handleGenerateDoctorNotes} 
+            disabled={(!patientNotes && !patientCompletion) || isDoctorLoading}
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg disabled:opacity-50 font-medium transition-all hover:from-green-600 hover:to-green-700 shadow-sm"
+          >
+            {isDoctorLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-white"></span>
+                Generating...
+              </span>
+            ) : 'Generate Doctor\'s Notes'}
+          </button>
+          <div 
+            ref={doctorNotesRef}
+            className="bg-white p-6 rounded-lg shadow-sm border"
+          >
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              className="prose max-w-none prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-p:text-gray-600 prose-strong:text-gray-900"
+            >
+              {currentSection === 'doctor' ? doctorCompletion : doctorNotes}
+            </ReactMarkdown>
+          </div>
+        </div>
+
+        {/* Mark Scheme Section */}
+        <div className="space-y-4">
+          <button 
+            onClick={handleGenerateMarkScheme} 
+            disabled={(!doctorNotes && !doctorCompletion) || isMarkLoading}
+            className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-lg disabled:opacity-50 font-medium transition-all hover:from-purple-600 hover:to-purple-700 shadow-sm"
+          >
+            {isMarkLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-white"></span>
+                Generating...
+              </span>
+            ) : 'Generate Mark Scheme'}
+          </button>
+          <div 
+            ref={markSchemeRef}
+            className="bg-white p-6 rounded-lg shadow-sm border"
+          >
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              className="prose max-w-none prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-p:text-gray-600 prose-strong:text-gray-900"
+            >
+              {currentSection === 'mark' ? markCompletion : markScheme}
+            </ReactMarkdown>
+          </div>
+        </div>
       </div>
     </div>
   );
