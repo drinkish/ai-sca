@@ -1,11 +1,10 @@
-/* eslint-disable react/no-unescaped-entities */
 "use client";
-
 
 import React, { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { useCompletion } from 'ai/react';
 
 const SCAGeneratorClient: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -13,25 +12,64 @@ const SCAGeneratorClient: React.FC = () => {
   const [patientNotes, setPatientNotes] = useState('');
   const [doctorNotes, setDoctorNotes] = useState('');
   const [markScheme, setMarkScheme] = useState('');
+  const [currentSection, setCurrentSection] = useState<'patient' | 'doctor' | 'mark' | null>(null);
 
   const patientNotesRef = useRef<HTMLDivElement>(null);
   const doctorNotesRef = useRef<HTMLDivElement>(null);
   const markSchemeRef = useRef<HTMLDivElement>(null);
 
-  const generateContent = async (action: string) => {
-    const response = await fetch('/api/sca-generator', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action,
-        domain,
-        additionalInfo,
-        patientNotes,
-        doctorNotes,
-      }),
-    });
-    const data = await response.json();
-    return data.result;
+  const {
+    complete: completePatient,
+    completion: patientCompletion,
+    isLoading: isPatientLoading,
+  } = useCompletion({
+    api: '/api/sca-generator',
+    onFinish: (result) => setPatientNotes(result)
+  });
+
+  const {
+    complete: completeDoctor,
+    completion: doctorCompletion,
+    isLoading: isDoctorLoading,
+  } = useCompletion({
+    api: '/api/sca-generator',
+    onFinish: (result) => setDoctorNotes(result)
+  });
+
+  const {
+    complete: completeMark,
+    completion: markCompletion,
+    isLoading: isMarkLoading,
+  } = useCompletion({
+    api: '/api/sca-generator',
+    onFinish: (result) => setMarkScheme(result)
+  });
+
+  const generateContent = async (action: string, section: 'patient' | 'doctor' | 'mark') => {
+    setCurrentSection(section);
+    const body = {
+      action,
+      domain,
+      additionalInfo,
+      patientNotes,
+      doctorNotes
+    };
+
+    let result;
+    switch (section) {
+      case 'patient':
+        result = await completePatient('', { body });
+        if (result) setPatientNotes(result);
+        break;
+      case 'doctor':
+        result = await completeDoctor('', { body });
+        if (result) setDoctorNotes(result);
+        break;
+      case 'mark':
+        result = await completeMark('', { body });
+        if (result) setMarkScheme(result);
+        break;
+    }
   };
 
   const scrollToRef = (ref: React.RefObject<HTMLDivElement>) => {
@@ -39,25 +77,58 @@ const SCAGeneratorClient: React.FC = () => {
   };
 
   const handleGeneratePatientNotes = async () => {
-    const result = await generateContent('generatePatientNotes');
-    setPatientNotes(result);
     scrollToRef(patientNotesRef);
+    await generateContent('generatePatientNotes', 'patient');
   };
 
   const handleGenerateDoctorNotes = async () => {
-    const result = await generateContent('generateDoctorNotes');
-    setDoctorNotes(result);
     scrollToRef(doctorNotesRef);
+    await generateContent('generateDoctorNotes', 'doctor');
   };
 
   const handleGenerateMarkScheme = async () => {
-    const result = await generateContent('generateMarkScheme');
-    setMarkScheme(result);
     scrollToRef(markSchemeRef);
+    await generateContent('generateMarkScheme', 'mark');
+  };
+
+  const handleGenerateRandomCase = async () => {
+    const domains = [
+      "patient-less-than-19-years-old",
+      "gender-reproductive-sexual-health",
+      "long-term-condition",
+      "older-adults",
+      "mental-health",
+      "urgent-unscheduled-care",
+      "health-disadvantages-vulnerabilities",
+      "new-presentation-undifferentiated-disease"
+    ];
+    
+    const randomDomain = domains[Math.floor(Math.random() * domains.length)];
+    setDomain(randomDomain);
+    
+    // Clear doctor notes and mark scheme, but don't clear patient notes immediately
+    setDoctorNotes('');
+    setMarkScheme('');
+    
+    // Generate new case
+    scrollToRef(patientNotesRef);
+    await generateContent('generatePatientNotes', 'patient');
   };
 
   return (
     <div className="space-y-4">
+      <button 
+        onClick={handleGenerateRandomCase}
+        disabled={isPatientLoading}
+        className="bg-orange-500 text-white px-4 py-2 rounded disabled:opacity-50 w-full"
+      >
+        {isPatientLoading ? 'Generating...' : 'Generate Random Case'}
+      </button>
+      
+      <p className="text-center text-sm text-gray-500">
+        Generate a random case above or select a specific domain below
+      </p>
+
       <div>
         <label htmlFor="domain" className="block mb-2">Select Domain:</label>
         <select 
@@ -92,9 +163,10 @@ const SCAGeneratorClient: React.FC = () => {
       
       <button 
         onClick={handleGeneratePatientNotes}
-        className="bg-blue-500 text-white px-4 py-2 rounded"
+        disabled={isPatientLoading}
+        className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
       >
-        Generate Patient Notes
+        {isPatientLoading ? 'Generating...' : 'Generate Patient Notes'}
       </button>
       <div 
         ref={patientNotesRef}
@@ -104,15 +176,17 @@ const SCAGeneratorClient: React.FC = () => {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           className="prose max-w-none"
-        >{patientNotes}</ReactMarkdown>
+        >
+          {currentSection === 'patient' ? patientCompletion : patientNotes}
+        </ReactMarkdown>
       </div>
       
       <button 
         onClick={handleGenerateDoctorNotes} 
-        disabled={!patientNotes}
+        disabled={(!patientNotes && !patientCompletion) || isDoctorLoading}
         className="bg-green-500 text-white px-4 py-2 rounded disabled:opacity-50"
       >
-        Generate Doctor's Notes
+        {isDoctorLoading ? 'Generating...' : 'Generate Doctor\'s Notes'}
       </button>
       <div 
         ref={doctorNotesRef}
@@ -122,15 +196,17 @@ const SCAGeneratorClient: React.FC = () => {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           className="prose max-w-none"
-        >{doctorNotes}</ReactMarkdown>
+        >
+          {currentSection === 'doctor' ? doctorCompletion : doctorNotes}
+        </ReactMarkdown>
       </div>
       
       <button 
         onClick={handleGenerateMarkScheme} 
-        disabled={!doctorNotes}
+        disabled={(!doctorNotes && !doctorCompletion) || isMarkLoading}
         className="bg-purple-500 text-white px-4 py-2 rounded disabled:opacity-50"
       >
-        Generate Mark Scheme
+        {isMarkLoading ? 'Generating...' : 'Generate Mark Scheme'}
       </button>
       <div 
         ref={markSchemeRef}
@@ -140,7 +216,9 @@ const SCAGeneratorClient: React.FC = () => {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           className="prose max-w-none"
-        >{markScheme}</ReactMarkdown>
+        >
+          {currentSection === 'mark' ? markCompletion : markScheme}
+        </ReactMarkdown>
       </div>
     </div>
   );

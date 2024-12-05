@@ -44,6 +44,7 @@
     "next-themes": "^0.3.0",
     "nodemailer": "^6.9.16",
     "openai": "^4.67.3",
+    "openai-edge": "^1.2.2",
     "postgres": "^3.4.4",
     "react": "19.0.0-rc-7771d3a7-20240827",
     "react-dom": "19.0.0-rc-7771d3a7-20240827",
