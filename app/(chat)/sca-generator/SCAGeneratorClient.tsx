@@ -211,7 +211,7 @@ const SCAGeneratorClient: React.FC = () => {
                 <span className="animate-spin rounded-full size-4 border-2 border-b-transparent border-white"></span>
                 Generating...
               </span>
-            ) : 'Generate Doctor&apos;s Notes'}
+            ) : 'Generate Doctor Notes'}
           </button>
           <div 
             ref={doctorNotesRef}
