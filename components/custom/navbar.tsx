@@ -22,13 +22,40 @@ export const Navbar = async () => {
         <div className="flex flex-row gap-3 items-center">
           <History user={session?.user} />
           <div className="flex flex-row gap-2 items-center">
-          <Link href="/" className="text-sm dark:text-zinc-300 hover:underline">
-            AI Tutor
-          </Link>
+            <Link 
+              href="https://app.scaprep.co.uk/" 
+              target="_blank"
+              className="text-sm hover:underline"
+            >
+              Home
+            </Link>
+            <Link href="/" className="text-sm dark:text-zinc-300 hover:underline">
+              AI Tutor
+            </Link>
           </div>
-          {/* Add SCA Generator link here */}
           <Link href="/sca-generator" className="text-sm hover:underline">
-            SCA Generator
+            SCA Cases
+          </Link>
+          <Link 
+            href="https://scaprep.co.uk/sca-hot-topics/" 
+            target="_blank"
+            className="text-sm hover:underline"
+          >
+            Hot Topics
+          </Link>
+          <Link 
+            href="https://scaprep.co.uk/about/" 
+            target="_blank"
+            className="text-sm hover:underline"
+          >
+            About
+          </Link>
+          <Link 
+            href="https://scaprep.co.uk/contacts/" 
+            target="_blank"
+            className="text-sm hover:underline"
+          >
+            Contact
           </Link>
         </div>
 
@@ -54,7 +81,7 @@ export const Navbar = async () => {
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link href="/sca-generator" className="w-full">
-                  SCA Generator
+                  SCA Cases
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="p-1 z-50">
