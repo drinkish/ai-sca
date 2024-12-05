@@ -1,11 +1,9 @@
 "use client";
 import { useCompletion } from 'ai/react';
 import React, { useState, useRef } from 'react';
-
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
-
 
 const SCAGeneratorClient: React.FC = () => {
   const [domain, setDomain] = useState('');
