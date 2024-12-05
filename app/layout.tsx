@@ -8,9 +8,9 @@ import { Toaster } from "@/components/ui/toaster"
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Next.js Chatbot Template",
-  description: "Next.js chatbot template using the AI SDK.",
+  metadataBase: new URL("https://app.scaprep.co.uk"),
+  title: "RCGP SCA Cases | SCA Revision powered by AI | SCA Prep",
+  description: "RCGP SCA Cases | SCA Revision powered by AI | SCA Prep",
 };
 
 export default async function RootLayout({
