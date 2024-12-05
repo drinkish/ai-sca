@@ -92,7 +92,7 @@ export default function BillingDetails() {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Amount:</span>
-                <span>$29.99/month</span>
+                <span>£14.95/month</span>
               </div>
             </div>
           </CardContent>

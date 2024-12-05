@@ -1,132 +1,37 @@
 // app/api/stripe/webhook/route.ts
-import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { validate as isUUID } from 'uuid';
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
 
-import { db } from "@/db";
-import { updateUserStripeId, upsertSubscription } from "@/db/queries";
-import { user, subscription } from "@/db/schema";
-
-export const runtime = 'nodejs';
+import { upsertSubscription } from '@/db/queries';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
+  const body = await req.text();
+  const signature = headers().get('stripe-signature')!;
+
   try {
-    const body = await request.text();
-    const signature = headers().get("Stripe-Signature");
-
-    if (!signature) {
-      console.error("⚠️ No Stripe signature found");
-      return NextResponse.json({ error: "No signature" }, { status: 400 });
-    }
-
-    let event: Stripe.Event;
-    try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err) {
-      console.error("⚠️ Webhook signature verification failed:", err);
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-    }
-
-    console.log(`✅ Processing webhook event: ${event.type}`);
+    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
 
     if (event.type === 'checkout.session.completed') {
-      const checkoutSession = event.data.object as Stripe.Checkout.Session;
-      console.log('Processing checkout session:', checkoutSession.id);
+      const session = event.data.object as Stripe.Checkout.Session;
+      const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
 
-      const metadata = checkoutSession.metadata as { userId?: string };
-      
-      if (!metadata?.userId || !isUUID(metadata.userId)) {
-        throw new Error('Invalid or missing userId in session metadata');
-      }
-
-      const userId = metadata.userId; // Store userId for type inference
-
-      // Get the subscription details
-      const stripeSubscription = await stripe.subscriptions.retrieve(
-        checkoutSession.subscription as string
-      );
-
-      console.log('Retrieved subscription:', {
-        id: stripeSubscription.id,
-        status: stripeSubscription.status,
-        customerId: checkoutSession.customer
-      });
-
-      // Begin transaction to update both user and subscription
-      await db.transaction(async (tx) => {
-        // 1. Update user's Stripe customer ID
-        await tx
-          .update(user)
-          .set({ stripeCustomerId: checkoutSession.customer as string })
-          .where(eq(user.id, userId));
-
-        console.log('Updated user stripe customer ID');
-
-        // 2. Create or update subscription
-        await tx
-          .insert(subscription)
-          .values({
-            userId,
-            stripeSubscriptionId: stripeSubscription.id,
-            status: stripeSubscription.status,
-            priceId: process.env.STRIPE_PRICE_ID!,
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
-          })
-          .onConflictDoUpdate({
-            target: [subscription.userId],
-            set: {
-              stripeSubscriptionId: stripeSubscription.id,
-              status: stripeSubscription.status,
-              priceId: process.env.STRIPE_PRICE_ID!,
-              currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-              currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
-            }
-          });
-
-        console.log('Upserted subscription record');
-      });
-
-      // Verify the updates (optional, but good for debugging)
-      const [updatedUser] = await db
-        .select()
-        .from(user)
-        .where(eq(user.id, userId));
-
-      console.log('Verified user data after update:', {
-        id: updatedUser.id,
-        stripeCustomerId: updatedUser.stripeCustomerId
-      });
-
-      const [subscriptionRecord] = await db
-        .select()
-        .from(subscription)
-        .where(eq(subscription.userId, userId));
-
-      console.log('Verified subscription record:', {
-        id: subscriptionRecord.id,
-        status: subscriptionRecord.status,
-        stripeSubscriptionId: subscriptionRecord.stripeSubscriptionId
+      await upsertSubscription({
+        userId: session.client_reference_id!,
+        stripeSubscriptionId: subscription.id,
+        status: subscription.status,
+        priceId: subscription.items.data[0].price.id,
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000)
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack
-      });
-    }
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Webhook handler failed" },
-      { status: 500 }
-    );
+    return new NextResponse('Webhook Error', { status: 400 });
   }
 }
