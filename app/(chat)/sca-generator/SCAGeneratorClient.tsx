@@ -105,24 +105,20 @@ const SCAGeneratorClient: React.FC = () => {
     const randomDomain = domains[Math.floor(Math.random() * domains.length)];
     setDomain(randomDomain);
     
-    // Clear doctor notes and mark scheme, but don't clear patient notes immediately
     setDoctorNotes('');
     setMarkScheme('');
     
-    // Generate new case
     scrollToRef(patientNotesRef);
     await generateContent('generatePatientNotes', 'patient');
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
-      {/* Header Section */}
       <div className="space-y-4">
         <h1 className="text-3xl font-bold text-center">SCA Case Generator</h1>
         <p className="text-center text-gray-600">Generate practice cases for your GP SCA exam preparation</p>
       </div>
 
-      {/* Random Case Generator */}
       <div className="bg-white rounded-lg shadow-sm p-6 space-y-4 border">
         <button 
           onClick={handleGenerateRandomCase}
@@ -131,7 +127,7 @@ const SCAGeneratorClient: React.FC = () => {
         >
           {isPatientLoading ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-white"></span>
+              <span className="animate-spin rounded-full size-4 border-2 border-b-transparent border-white"></span>
               Generating...
             </span>
           ) : 'Generate Random Case'}
@@ -142,7 +138,6 @@ const SCAGeneratorClient: React.FC = () => {
         </p>
       </div>
 
-      {/* Case Configuration */}
       <div className="bg-white rounded-lg shadow-sm p-6 space-y-6 border">
         <div className="space-y-2">
           <label htmlFor="domain" className="block text-sm font-medium text-gray-700">Domain</label>
@@ -154,7 +149,7 @@ const SCAGeneratorClient: React.FC = () => {
           >
             <option value="">Select Domain</option>
             <option value="patient-less-than-19-years-old">Patient less than 19 years old</option>
-            <option value="gender-reproductive-sexual-health">Gender, reproductive and sexual health, including women's, men's, LGBTQ+, gynaecology and breast</option>
+            <option value="gender-reproductive-sexual-health">Gender, reproductive and sexual health, including women&apos;s, men&apos;s, LGBTQ+, gynaecology and breast</option>
             <option value="long-term-condition">Long-term condition, including cancer, multi-morbidity, and disability</option>
             <option value="older-adults">Older adults, including frailty and end of life care</option>
             <option value="mental-health">Mental health, including addiction, alcohol and substance misuse</option>
@@ -177,9 +172,7 @@ const SCAGeneratorClient: React.FC = () => {
         </div>
       </div>
 
-      {/* Generated Content Sections */}
       <div className="space-y-8">
-        {/* Patient Notes Section */}
         <div className="space-y-4">
           <button 
             onClick={handleGeneratePatientNotes}
@@ -188,7 +181,7 @@ const SCAGeneratorClient: React.FC = () => {
           >
             {isPatientLoading ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-white"></span>
+                <span className="animate-spin rounded-full size-4 border-2 border-b-transparent border-white"></span>
                 Generating...
               </span>
             ) : 'Generate Patient Notes'}
@@ -207,7 +200,6 @@ const SCAGeneratorClient: React.FC = () => {
           </div>
         </div>
 
-        {/* Doctor Notes Section */}
         <div className="space-y-4">
           <button 
             onClick={handleGenerateDoctorNotes} 
@@ -216,10 +208,10 @@ const SCAGeneratorClient: React.FC = () => {
           >
             {isDoctorLoading ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-white"></span>
+                <span className="animate-spin rounded-full size-4 border-2 border-b-transparent border-white"></span>
                 Generating...
               </span>
-            ) : 'Generate Doctor\'s Notes'}
+            ) : 'Generate Doctor&apos;s Notes'}
           </button>
           <div 
             ref={doctorNotesRef}
@@ -235,7 +227,6 @@ const SCAGeneratorClient: React.FC = () => {
           </div>
         </div>
 
-        {/* Mark Scheme Section */}
         <div className="space-y-4">
           <button 
             onClick={handleGenerateMarkScheme} 
@@ -244,7 +235,7 @@ const SCAGeneratorClient: React.FC = () => {
           >
             {isMarkLoading ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-white"></span>
+                <span className="animate-spin rounded-full size-4 border-2 border-b-transparent border-white"></span>
                 Generating...
               </span>
             ) : 'Generate Mark Scheme'}
