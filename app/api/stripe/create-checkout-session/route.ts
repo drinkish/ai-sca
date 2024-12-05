@@ -8,7 +8,7 @@ import { db } from "@/db";
 import { user } from "@/db/schema";
 import { stripe } from "@/lib/stripe";
 
-export async function POST(req: Request) {
+export async function POST() {
   try {
     // Verify environment variables
     if (!process.env.STRIPE_PRICE_ID) {
@@ -62,8 +62,7 @@ export async function POST(req: Request) {
               userId: session.user.id,
             },
             billing_address_collection: "required",
-            allow_promotion_codes: true,
-            client_reference_id: session.user.id
+            allow_promotion_codes: true
           }
         : {
             mode: "subscription",
@@ -81,8 +80,7 @@ export async function POST(req: Request) {
               userId: session.user.id,
             },
             billing_address_collection: "required",
-            allow_promotion_codes: true,
-            client_reference_id: session.user.id
+            allow_promotion_codes: true
           }
     );
 
