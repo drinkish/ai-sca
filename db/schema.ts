@@ -8,6 +8,8 @@ export const user = pgTable("User", {
   password: varchar("password", { length: 255 }), // Made non-nullable to accomodate OAuth/google users
   oAuthId: text('o_auth_id'),
   stripeCustomerId: text('stripe_customer_id'),
+  resetToken: text('reset_token'),
+  resetTokenExpiry: timestamp('reset_token_expiry', {withTimezone: true}),
 });
 
 export type User = InferSelectModel<typeof user>;

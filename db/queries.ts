@@ -17,6 +17,14 @@ export async function getUser(email: string): Promise<Array<User>> {
   }
 }
 
+export async function getUserByToken(token: string): Promise<Array<User>> {
+  try {
+    return await db.select().from(user).where(eq(user.resetToken, token));
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function createUser(email: string, password: string, oAuthId?: string) {
   const salt = genSaltSync(10);
   const hash = hashSync(password, salt);
@@ -198,21 +206,16 @@ export async function updateUserEmail(email: string, newEmail: string) {
   }
 }
 
+// Password related queries
+
 export async function changeUserPassword(email: string, oldPassword: string, newPassword: string) {
-  
-  console.log(`Old hashed password: ${oldPassword}`);
+
   
   const [userData] = await db.select().from(user).where(eq(user.email, email));
-  console.log(`user found in the db`);
-  console.log(userData);
-  console.log(userData.password);
-
   
   const passwordsMatch = await compare(oldPassword, userData.password!);
 
   if (passwordsMatch) {
-
-    console.log(`Passwords match.`);
     
     const salt = genSaltSync(10);
     const hash = hashSync(newPassword, salt);
@@ -229,6 +232,30 @@ export async function changeUserPassword(email: string, oldPassword: string, new
     console.error("Pass didn't match!")
   }
           
+}
 
-  
+export async function updateForgotPasswordToken(email: string, resetToken: string, resetTokenExpiry: Date) {
+  try {
+    console.log(`Updating forgot password token in database`);
+    
+    return await db.update(user)
+      .set({ resetToken, resetTokenExpiry })
+      .where(eq(user.email, email));
+  } catch (error) {
+    console.error("Failed to update forgot password token in database");
+    throw error;
+  }
+}
+
+export async function updateForgotPassword(token: string, hashedPassword: string){
+  try {
+    console.log(`Updating forgot password in database`);
+    
+    return await db.update(user)
+      .set({ password: hashedPassword })
+      .where(eq(user.resetToken, token));
+  } catch (error) {
+    console.error("Failed to update forgot password in database");
+    throw error;
+  }
 }

@@ -100,10 +100,13 @@ importers:
         version: 15.0.0-canary.152(@opentelemetry/api@1.9.0)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827)
       next-auth:
         specifier: 5.0.0-beta.22
-        version: 5.0.0-beta.22(next@15.0.0-canary.152(@opentelemetry/api@1.9.0)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827)
+        version: 5.0.0-beta.22(next@15.0.0-canary.152(@opentelemetry/api@1.9.0)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827))(nodemailer@6.9.16)(react@19.0.0-rc-7771d3a7-20240827)
       next-themes:
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827)
+      nodemailer:
+        specifier: ^6.9.16
+        version: 6.9.16
       openai:
         specifier: ^4.67.3
         version: 4.67.3(zod@3.23.8)
@@ -162,6 +165,9 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.14.13
+      '@types/nodemailer':
+        specifier: ^6.4.17
+        version: 6.4.17
       '@types/pdf-parse':
         specifier: ^1.1.4
         version: 1.1.4
@@ -1559,6 +1565,9 @@ packages:
 
   '@types/node@20.14.13':
     resolution: {integrity: sha512-+bHoGiZb8UiQ0+WEtmph2IWQCjIqg8MDZMAV+ppRRhUZnquF5mQkP/9vpSwJClEiSM/C7fZZExPzfU0vJTyp8w==}
+
+  '@types/nodemailer@6.4.17':
+    resolution: {integrity: sha512-I9CCaIp6DTldEg7vyUTZi8+9Vo0hi1/T8gv3C89yk1rSAAzoKQ8H8ki/jBYJSFoH/BisgLP8tkZMlQ91CIquww==}
 
   '@types/pdf-parse@1.1.4':
     resolution: {integrity: sha512-+gbBHbNCVGGYw1S9lAIIvrHW47UYOhMIFUsJcMkMrzy1Jf0vulBN3XQIjPgnoOXveMuHnF3b57fXROnY/Or7eg==}
@@ -3159,6 +3168,10 @@ packages:
     resolution: {integrity: sha512-IRUxE4BVsHWXkV/SFOut4qTlagw2aM8T5/vnTsmrHJvVoKueJHRc/JaFND7QDDc61kLYUJ6qlZM3sqTSyx2dTw==}
     hasBin: true
 
+  nodemailer@6.9.16:
+    resolution: {integrity: sha512-psAuZdTIRN08HKVd/E8ObdV6NO7NTBY3KsC30F7M4H1OnmLCUNaS56FpYxyb26zWLSyYF9Ozch9KYHhHegsiOQ==}
+    engines: {node: '>=6.0.0'}
+
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
@@ -4094,7 +4107,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
 
-  '@auth/core@0.35.3':
+  '@auth/core@0.35.3(nodemailer@6.9.16)':
     dependencies:
       '@panva/hkdf': 1.2.1
       '@types/cookie': 0.6.0
@@ -4103,6 +4116,8 @@ snapshots:
       oauth4webapi: 2.17.0
       preact: 10.11.3
       preact-render-to-string: 5.2.3(preact@10.11.3)
+    optionalDependencies:
+      nodemailer: 6.9.16
 
   '@babel/helper-string-parser@7.24.8': {}
 
@@ -5085,6 +5100,10 @@ snapshots:
   '@types/node@20.14.13':
     dependencies:
       undici-types: 5.26.5
+
+  '@types/nodemailer@6.4.17':
+    dependencies:
+      '@types/node': 20.14.13
 
   '@types/pdf-parse@1.1.4': {}
 
@@ -7053,11 +7072,13 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-auth@5.0.0-beta.22(next@15.0.0-canary.152(@opentelemetry/api@1.9.0)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827):
+  next-auth@5.0.0-beta.22(next@15.0.0-canary.152(@opentelemetry/api@1.9.0)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827))(nodemailer@6.9.16)(react@19.0.0-rc-7771d3a7-20240827):
     dependencies:
-      '@auth/core': 0.35.3
+      '@auth/core': 0.35.3(nodemailer@6.9.16)
       next: 15.0.0-canary.152(@opentelemetry/api@1.9.0)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827)
       react: 19.0.0-rc-7771d3a7-20240827
+    optionalDependencies:
+      nodemailer: 6.9.16
 
   next-themes@0.3.0(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827):
     dependencies:
@@ -7104,6 +7125,8 @@ snapshots:
       whatwg-url: 5.0.0
 
   node-gyp-build@4.8.2: {}
+
+  nodemailer@6.9.16: {}
 
   normalize-path@3.0.0: {}
 
