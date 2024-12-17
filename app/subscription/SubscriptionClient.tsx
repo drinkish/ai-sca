@@ -72,6 +72,8 @@ export default function SubscriptionClient() {
 
   // Debug logging
   useEffect(() => {
+    console.log(session?.user);
+    
     console.log('Current session status:', {
       isAuthenticated: !!session,
       subscriptionStatus: session?.user?.subscriptionStatus,

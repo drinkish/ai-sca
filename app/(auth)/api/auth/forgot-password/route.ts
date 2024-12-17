@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     await updateForgotPasswordToken(email, resetTokenHash, expiration);
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
     const mailOptions = {
         email: process.env.SMTP_EMAIL as string,
         sendTo: email,
