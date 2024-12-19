@@ -36,9 +36,9 @@ export const Navbar = async () => {
           <Link href="/sca-generator" className="text-sm hover:underline">
             SCA Cases
           </Link>
-          <Link href="/video-chat" className="text-sm hover:underline">
+          {/* <Link href="/video-chat" className="text-sm hover:underline">
             Video Chat
-          </Link>
+          </Link> */}
           <Link 
             href="https://scaprep.co.uk/sca-hot-topics/" 
             target="_blank"
