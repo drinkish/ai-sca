@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { getSubscription, getUser } from '@/db/queries'
+import { stripe } from '@/lib/stripe';
 
 
 interface SubscriptionType {
@@ -36,6 +37,11 @@ export default function BillingDetails() {
       setSubscription(subscriptionData);
       console.log('subscription');
       console.log(subscription);
+
+      const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionData?.stripeSubscriptionId!);
+      console.log('stripeSubscription retrieval');
+      console.log(stripeSubscription);
+      
       setUser(userData);
       console.log("Set user data");
       console.log(userData);
@@ -76,7 +82,7 @@ export default function BillingDetails() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="font-medium">Status:</span>
-                <span>{subscription && subscription?.status}</span>
+                <span>{subscription ? subscription?.status : "Unactive"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Plan:</span>
@@ -90,10 +96,9 @@ export default function BillingDetails() {
                 <span className="font-medium">Next Billing Date:</span>
                 <span>{subscription &&  new Date(subscription?.currentPeriodEnd).toLocaleDateString() }</span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Amount:</span>
-                <span>£14.95/month</span>
-              </div>
+              {/* <div className="flex justify-between">
+                <span className="font-medium">Amount:</span> </div> */}
+
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

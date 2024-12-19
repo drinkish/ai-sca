@@ -8,6 +8,7 @@ import { validate as isUUID } from 'uuid';
 import { db } from "@/db";
 import { updateUserStripeId, upsertSubscription } from "@/db/queries";
 import { user, subscription } from "@/db/schema";
+import { sendMail } from "@/lib/send-mail";
 
 export const runtime = 'nodejs';
 
@@ -114,6 +115,30 @@ export async function POST(request: Request) {
         stripeSubscriptionId: subscriptionRecord.stripeSubscriptionId
       });
     }
+
+    // adding email functionality
+
+    
+    const mailOptions = {
+        email: process.env.SMTP_EMAIL as string,
+        sendTo: "musafdev@gmail.com",
+        subject: 'Subscription Activated',
+        text: `Congrates your subscription is activated`,
+        html: `<p>You are subscribed to our services</p>`,
+      };
+    
+      try {
+        await sendMail( mailOptions);   
+    
+        // console.log("Password reset link sent to", email);
+    
+        return NextResponse.json({ message: "Password reset link sent to your email." });
+        
+    
+      } catch (error) {
+        console.error("Error sending email:", error);
+        return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+      }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -29,6 +29,9 @@ export async function POST() {
     }
 
     // Get user from database
+    console.log('usersz inside the stripe checkout session');
+    console.log(session.user.id);
+
     const users = await db
       .select()
       .from(user)

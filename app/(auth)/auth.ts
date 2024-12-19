@@ -8,6 +8,8 @@ import { getUser, getSubscription } from "@/db/queries";
 import { registerWithGoogle } from "./actions";
 import { authConfig } from "./auth.config";
 
+let globalVar = ''
+
 const handler = NextAuth({
   ...authConfig,
   providers: [
@@ -67,7 +69,6 @@ const handler = NextAuth({
   callbacks: {
 
     async signIn({ user }) {
-      
       // Works when signed in via google.
       if('method' in user && user?.method === 'google') {
         
@@ -78,6 +79,10 @@ const handler = NextAuth({
         if(typeof email !== 'string' || typeof oAuthId !== 'string') return false;
 
         const users = await getUser(email);
+        globalVar = users[0].id;
+        console.log('signedUser');
+        console.log(users);
+        
         
         if (users.length === 0) {
           console.log(`New user`);
@@ -94,6 +99,10 @@ const handler = NextAuth({
     
     async jwt({ token, user }) {
       if (user) {
+        console.log(`jwt user`);
+        console.log(user);
+        console.log(user.id);
+        
         token.id = user.id;
         token.email = user.email;
         token.stripeCustomerId = user.stripeCustomerId;
@@ -103,9 +112,21 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
+      
+      
+      
+
       if (session.user) {
-        session.user.id = token.id as string;
+
+        
+        
+        // session.user.id = token.id as string; //here should come the db user id 
+        session.user.id = globalVar as string; //here should come the db user id 
+        console.log(`session.user.id`);
+        console.log(session);
+        
         session.user.email = token.email as string;
+        
         session.user.stripeCustomerId = token.stripeCustomerId as string | null;
         session.user.subscriptionStatus = (token.subscriptionStatus as string) ?? 'inactive';
         session.user.subscriptionEndDate = token.subscriptionEndDate as Date | null;
