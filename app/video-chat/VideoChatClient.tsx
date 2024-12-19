@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 
 interface TavusResponse {
@@ -120,12 +121,12 @@ export default function VideoChatClient() {
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
                   >
-                    Click here if the chat window didn't open
+                    Click here if the chat window didn&apos;t open
                   </a>
                 </>
               ) : (
                 <p className="text-gray-500">
-                  Click "Start Chat" to begin a video consultation
+                  Click &quot;Start Chat&quot; to begin a video consultation
                 </p>
               )}
             </div>
