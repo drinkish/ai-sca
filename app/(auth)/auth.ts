@@ -8,25 +8,22 @@ import { getUser, getSubscription } from "@/db/queries";
 import { registerWithGoogle } from "./actions";
 import { authConfig } from "./auth.config";
 
-let globalVar = ''
-
 const handler = NextAuth({
   ...authConfig,
   providers: [
+    // Google OAuth provider configuration
     GoogleProvider({
+      // Add method property to profile to identify Google auth users
       profile(profile){
-        // console.log(profile);
-
         return {
           ...profile,
-          method: "google"
+          method: "google" // Used to identify Google OAuth users in signIn callback
         }
-        
       },
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
-      
     }),
+    // Email/Password provider configuration
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -47,10 +44,10 @@ const handler = NextAuth({
         if (passwordsMatch) {
           const { password: _, ...userWithoutPassword } = users[0];
           
-          // Get subscription data
+          // Get subscription data for the user
           const subscriptionData = await getSubscription(userWithoutPassword.id);
           
-          // Return user with subscription data
+          // Return user object with subscription status
           return {
             ...userWithoutPassword,
             subscriptionStatus: subscriptionData?.status ?? 'inactive',
@@ -63,46 +60,46 @@ const handler = NextAuth({
     }),
   ],
   session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    strategy: "jwt", // Use JWT strategy for session handling
+    maxAge: 30 * 24 * 60 * 60, // 30 days session duration
   },
   callbacks: {
-
+    // Called when a user signs in
     async signIn({ user }) {
-      // Works when signed in via google.
+      // Handle Google OAuth sign-in
       if('method' in user && user?.method === 'google') {
-        
         console.log("Google user logged in");
         const email = user?.email;
         const oAuthId = user?.id;
         
         if(typeof email !== 'string' || typeof oAuthId !== 'string') return false;
 
+        // Check if user exists in our database
         const users = await getUser(email);
-        globalVar = users[0].id;
-        console.log('signedUser');
-        console.log(users);
-        
-        
         if (users.length === 0) {
           console.log(`New user`);
-          
-          const res = await registerWithGoogle(email, oAuthId);
-          console.log(`response of signing in with google ${res}`);
+          // Register new Google user
+          await registerWithGoogle(email, oAuthId);
+          // Get the newly created user to set their database ID
+          const newUsers = await getUser(email);
+          if (newUsers.length > 0) {
+            // Important: Set the database ID on the user object
+            user.id = newUsers[0].id;
+          }
+        } else {
+          // Set the database ID for existing users
+          user.id = users[0].id;
         }
-
         return true;
       }
-      
       return true;
     },
     
+    // Called whenever a JWT is created or updated
     async jwt({ token, user }) {
       if (user) {
-        console.log(`jwt user`);
-        console.log(user);
-        console.log(user.id);
-        
+        // Copy important user data to the token
+        // This ensures the data persists across sessions
         token.id = user.id;
         token.email = user.email;
         token.stripeCustomerId = user.stripeCustomerId;
@@ -111,22 +108,14 @@ const handler = NextAuth({
       }
       return token;
     },
+
+    // Called whenever a session is checked
     async session({ session, token }) {
-      
-      
-      
-
       if (session.user) {
-
-        
-        
-        // session.user.id = token.id as string; //here should come the db user id 
-        session.user.id = globalVar as string; //here should come the db user id 
-        console.log(`session.user.id`);
-        console.log(session);
-        
+        // Copy data from the token to the session
+        // This makes the data available on the client side
+        session.user.id = token.id as string;
         session.user.email = token.email as string;
-        
         session.user.stripeCustomerId = token.stripeCustomerId as string | null;
         session.user.subscriptionStatus = (token.subscriptionStatus as string) ?? 'inactive';
         session.user.subscriptionEndDate = token.subscriptionEndDate as Date | null;
