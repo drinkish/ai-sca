@@ -1,6 +1,6 @@
-import { WebSocketServer, WebSocket as WSWebSocket } from 'ws';
 import { NextRequest } from 'next/server';
 import OpenAI from 'openai';
+import { WebSocketServer, WebSocket as WSWebSocket } from 'ws';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
