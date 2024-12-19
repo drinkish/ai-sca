@@ -86,11 +86,11 @@ export const Navbar = async () => {
                   SCA Cases
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              {/* <DropdownMenuItem>
                 <Link href="/video-chat" className="w-full">
                   Video Chat
                 </Link>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem className="p-1 z-50">
                 <form
                   className="w-full"
