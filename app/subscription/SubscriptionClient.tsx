@@ -21,9 +21,11 @@ export default function SubscriptionClient() {
         try {
           // Force an immediate session refresh
           await update();
+          // Wait a brief moment to ensure the session is updated
+          await new Promise(resolve => setTimeout(resolve, 1000));
           console.log('Session updated:', session);
-          // Clean up the URL
-          router.replace('/subscription');
+          // Redirect to start page after successful subscription
+          router.replace('/start');
         } catch (error) {
           console.error('Failed to refresh session:', error);
         }
