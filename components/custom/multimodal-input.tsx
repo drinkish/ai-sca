@@ -20,14 +20,14 @@ import { Textarea } from "../ui/textarea";
 
 const suggestedActions = [
   {
-    title: "What is the weather",
-    label: "in San Francisco?",
-    action: "what is the weather in San Francisco?",
+    title: "How do I manage",
+    label: "migraines?",
+    action: "migraine management",
   },
   {
-    title: "Answer like I'm 5,",
-    label: "why is the sky blue?",
-    action: "Answer like I'm 5, why is the sky blue?",
+    title: "How do i explain",
+    label: "menopause?",
+    action: "how do i explain menopause?",
   },
 ];
 

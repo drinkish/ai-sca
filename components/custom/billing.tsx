@@ -97,9 +97,8 @@ export default function BillingDetails() {
                 <span>{subscription &&  new Date(subscription?.currentPeriodEnd).toLocaleDateString() }</span>
               </div>
               {/* <div className="flex justify-between">
-                <span className="font-medium">Amount:</span>
-                <span>$29.99/month</span>
-              </div> */}
+                <span className="font-medium">Amount:</span> </div> */}
+
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

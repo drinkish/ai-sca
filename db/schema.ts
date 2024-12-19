@@ -5,7 +5,7 @@ import { pgTable, varchar, timestamp, json, uuid, text } from "drizzle-orm/pg-co
 export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull().unique(),
-  password: varchar("password", { length: 64 }), // Made non-nullable to accomodate OAuth/google users
+  password: varchar("password", { length: 255 }), // Made non-nullable to accomodate OAuth/google users
   oAuthId: text('o_auth_id'),
   stripeCustomerId: text('stripe_customer_id'),
   resetToken: text('reset_token'),
