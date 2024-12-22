@@ -68,7 +68,7 @@ const handler = NextAuth({
   },
   callbacks: {
 
-    async signIn({ user }) {
+    async signIn({ user, account, profile, email, credentials }) {
       // Works when signed in via google.
       if('method' in user && user?.method === 'google') {
         
@@ -97,37 +97,40 @@ const handler = NextAuth({
       return true;
     },
     
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile, isNewUser }) {
       if (user) {
-        console.log(`jwt user`);
-        console.log(user);
-        console.log(user.id);
+
+        if (!profile) {
+          token.id = user.id;
+        }
+        else{
+          
+          const dbUser = await getUser(user.email!);
+          if(dbUser.length === 0) return token;
+          token.id = dbUser[0].id;
+        }
         
-        token.id = user.id;
+        const subscriptionStatusDb = await getSubscription(token.id as string);
+        token.subscriptionStatus = subscriptionStatusDb?.status;
+        console.log('subscriptionStatusDb');
+        console.log(token.subscriptionStatus);
+        // token.id = account?.providerAccountId;
         token.email = user.email;
         token.stripeCustomerId = user.stripeCustomerId;
-        token.subscriptionStatus = user.subscriptionStatus;
         token.subscriptionEndDate = user.subscriptionEndDate;
       }
       return token;
     },
     async session({ session, token }) {
-      
-      
-      
 
       if (session.user) {
-
-        
-        
-        // session.user.id = token.id as string; //here should come the db user id 
-        session.user.id = globalVar as string; //here should come the db user id 
-        console.log(`session.user.id`);
-        console.log(session);
-        
+ 
         session.user.email = token.email as string;
+        session.user.id = token.id as string; 
         
         session.user.stripeCustomerId = token.stripeCustomerId as string | null;
+
+        
         session.user.subscriptionStatus = (token.subscriptionStatus as string) ?? 'inactive';
         session.user.subscriptionEndDate = token.subscriptionEndDate as Date | null;
       }

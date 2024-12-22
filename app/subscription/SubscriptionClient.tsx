@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { getSession, useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 export default function SubscriptionClient() {
   const { data: session, status, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -20,7 +21,17 @@ export default function SubscriptionClient() {
       if (searchParams.get('success')) {
         try {
           // Force an immediate session refresh
-          await update();
+          await getSession( );
+
+          setIsSubscribed(true);
+          
+          if (session?.user?.subscriptionStatus === 'active') {
+            router.replace('/subscription');
+            return;
+          }
+          
+          console.log('🚨🚨👉👉🔖🔖🚨🚨👉');
+          
           console.log('Session updated:', session);
           // Clean up the URL
           router.replace('/subscription');
@@ -91,8 +102,11 @@ export default function SubscriptionClient() {
   }
 
   // Check if user has active subscription
-  const isSubscribed = session?.user?.subscriptionStatus === 'active';
-
+  // const isSubscribed = session?.user?.subscriptionStatus === 'active';
+  
+  console.log('Check if user has active subscription');
+  console.log(session?.user?.subscriptionStatus);
+  
   return (
     <div className="max-w-2xl mx-auto p-6 mt-16 space-y-8">
       <div className="text-center space-y-4">

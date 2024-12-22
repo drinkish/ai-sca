@@ -119,26 +119,26 @@ export async function POST(request: Request) {
     // adding email functionality
 
     
-    const mailOptions = {
-        email: process.env.SMTP_EMAIL as string,
-        sendTo: "musafdev@gmail.com",
-        subject: 'Subscription Activated',
-        text: `Congrates your subscription is activated`,
-        html: `<p>You are subscribed to our services</p>`,
-      };
+    // const mailOptions = {
+    //     email: process.env.SMTP_EMAIL as string,
+    //     sendTo: "musafdev@gmail.com",
+    //     subject: 'Subscription Activated',
+    //     text: `Congrates your subscription is activated`,
+    //     html: `<p>You are subscribed to our services</p>`,
+    //   };
     
-      try {
-        await sendMail( mailOptions);   
+    //   try {
+    //     await sendMail( mailOptions);   
     
-        // console.log("Password reset link sent to", email);
+    //     // console.log("Password reset link sent to", email);
     
-        return NextResponse.json({ message: "Password reset link sent to your email." });
+    //     return NextResponse.json({ message: "Password reset link sent to your email." });
         
     
-      } catch (error) {
-        console.error("Error sending email:", error);
-        return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
-      }
+    //   } catch (error) {
+    //     console.error("Error sending email:", error);
+    //     return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+    //   }
 
     return NextResponse.json({ success: true });
   } catch (error) {
