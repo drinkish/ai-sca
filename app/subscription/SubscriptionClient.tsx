@@ -21,7 +21,7 @@ export default function SubscriptionClient() {
       if (searchParams.get('success')) {
         try {
           // Force an immediate session refresh
-          await getSession( );
+          await update( );
 
           setIsSubscribed(true);
           
@@ -29,10 +29,7 @@ export default function SubscriptionClient() {
             router.replace('/subscription');
             return;
           }
-          
-          console.log('🚨🚨👉👉🔖🔖🚨🚨👉');
-          
-          console.log('Session updated:', session);
+
           // Clean up the URL
           router.replace('/subscription');
         } catch (error) {
@@ -83,8 +80,13 @@ export default function SubscriptionClient() {
 
   // Debug logging
   useEffect(() => {
-    console.log(session?.user);
+
+    const checkSubStatus = async () => {
+      setIsSubscribed(session?.user?.subscriptionStatus === 'active' || false);
+    }
     
+    checkSubStatus();
+
     console.log('Current session status:', {
       isAuthenticated: !!session,
       subscriptionStatus: session?.user?.subscriptionStatus,
