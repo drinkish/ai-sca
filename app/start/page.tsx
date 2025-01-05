@@ -16,7 +16,7 @@ export default function StartPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/')}>
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = 'https://app.scaprep.co.uk/'}>
           <CardHeader>
             <CardTitle>AI Tutor</CardTitle>
             <CardDescription>Interactive learning with our AI tutor</CardDescription>
