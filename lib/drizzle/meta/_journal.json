@@ -15,6 +15,13 @@
       "when": 1731382399962,
       "tag": "0001_needy_bloodscream",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1734605978359,
+      "tag": "0002_safe_mandarin",
+      "breakpoints": true
     }
   ]
 }

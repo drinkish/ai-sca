@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 export const authConfig = {
   pages: {
     signIn: "/login",
-    newUser: "/",
+    newUser: "/start",
   },
   providers: [],
   callbacks: {
@@ -16,7 +16,7 @@ export const authConfig = {
       let isOnLogin = request.nextUrl.pathname.startsWith("/login");
 
       if (isLoggedIn && (isOnLogin || isOnRegister)) {
-        return Response.redirect(new URL("/", request.nextUrl));
+        return Response.redirect(new URL("/start", request.nextUrl));
       }
 
       if (isOnRegister || isOnLogin) {
@@ -29,7 +29,7 @@ export const authConfig = {
       }
 
       if (isLoggedIn) {
-        return Response.redirect(new URL("/", request.nextUrl));
+        return Response.redirect(new URL("/start", request.nextUrl));
       }
 
       return true;

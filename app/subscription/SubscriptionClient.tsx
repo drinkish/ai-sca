@@ -21,17 +21,14 @@ export default function SubscriptionClient() {
       if (searchParams.get('success')) {
         try {
           // Force an immediate session refresh
-          await update( );
 
-          setIsSubscribed(true);
-          
-          if (session?.user?.subscriptionStatus === 'active') {
-            router.replace('/subscription');
-            return;
-          }
+          await update();
+          // Wait a brief moment to ensure the session is updated
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log('Session updated:', session);
+          // Redirect to start page after successful subscription
+          router.replace('/start');
 
-          // Clean up the URL
-          router.replace('/subscription');
         } catch (error) {
           console.error('Failed to refresh session:', error);
         }

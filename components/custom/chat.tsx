@@ -33,10 +33,10 @@ export function Chat({
 
   return (
     <div className="flex flex-row justify-center pb-4 md:pb-8 h-dvh bg-background">
-      <div className="flex flex-col justify-between items-center gap-4">
+      <div className="flex flex-col justify-between items-center gap-4 w-full max-w-[1200px]">
         <div
           ref={messagesContainerRef}
-          className="flex flex-col gap-4 h-full w-dvw items-center overflow-y-scroll"
+          className="flex flex-col gap-4 h-full w-full items-center overflow-y-scroll px-4"
         >
           {messages.length === 0 && <Overview />}
 
@@ -55,7 +55,7 @@ export function Chat({
           />
         </div>
 
-        <form className="flex flex-row gap-2 relative items-end w-full md:max-w-[500px] max-w-[calc(100dvw-32px) px-4 md:px-0">
+        <form className="flex flex-row gap-2 relative items-end w-full max-w-[800px] px-4">
           <MultimodalInput
             input={input}
             setInput={setInput}

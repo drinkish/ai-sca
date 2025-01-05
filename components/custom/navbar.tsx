@@ -36,9 +36,9 @@ export const Navbar = async () => {
           <Link href="/sca-generator" className="text-sm hover:underline">
             SCA Cases
           </Link>
-          <Link href="/video-chat" className="text-sm hover:underline">
+          {/* <Link href="/video-chat" className="text-sm hover:underline">
             Video Chat
-          </Link>
+          </Link> */}
           <Link 
             href="https://scaprep.co.uk/sca-hot-topics/" 
             target="_blank"
@@ -86,11 +86,11 @@ export const Navbar = async () => {
                   SCA Cases
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              {/* <DropdownMenuItem>
                 <Link href="/video-chat" className="w-full">
                   Video Chat
                 </Link>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem className="p-1 z-50">
                 <form
                   className="w-full"

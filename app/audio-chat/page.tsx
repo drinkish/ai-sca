@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+
 import RealtimeAudioConsultation from '@/components/custom/RealtimeAudioConsultation'
 
 export const metadata: Metadata = {

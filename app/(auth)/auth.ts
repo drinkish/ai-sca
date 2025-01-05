@@ -14,20 +14,19 @@ import { authConfig } from "./auth.config";
 const handler = NextAuth({
   ...authConfig,
   providers: [
+    // Google OAuth provider configuration
     GoogleProvider({
+      // Add method property to profile to identify Google auth users
       profile(profile){
-        // console.log(profile);
-
         return {
           ...profile,
-          method: "google"
+          method: "google" // Used to identify Google OAuth users in signIn callback
         }
-        
       },
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
-      
     }),
+    // Email/Password provider configuration
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -48,10 +47,10 @@ const handler = NextAuth({
         if (passwordsMatch) {
           const { password: _, ...userWithoutPassword } = users[0];
           
-          // Get subscription data
+          // Get subscription data for the user
           const subscriptionData = await getSubscription(userWithoutPassword.id);
           
-          // Return user with subscription data
+          // Return user object with subscription status
           return {
             ...userWithoutPassword,
             subscriptionStatus: subscriptionData?.status ?? 'inactive',
@@ -64,55 +63,53 @@ const handler = NextAuth({
     }),
   ],
   session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    strategy: "jwt", // Use JWT strategy for session handling
+    maxAge: 30 * 24 * 60 * 60, // 30 days session duration
   },
   callbacks: {
 
-    async signIn({ user, account, profile, email, credentials }) {
-      // Works when signed in via google.
+    // Called when a user signs in
+    async signIn({ user }) {
+      // Handle Google OAuth sign-in
       if('method' in user && user?.method === 'google') {
-        
+        console.log("Google user logged in");
+
         const email = user?.email;
         const oAuthId = user?.id;
         
         if(typeof email !== 'string' || typeof oAuthId !== 'string') return false;
 
-        try {
-          const users = await getUser(email);
-          
-          if (users.length === 0) {
-            console.log(`New user`);
-            
-            const res = await registerWithGoogle(email, oAuthId);
-            console.log(`response of signing in with google ${res}`);
-          }
-        } catch (error) {
-          console.error('Error during Google sign-in:', error);
-          return false;
-        }
 
+        // Check if user exists in our database
+        const users = await getUser(email);
+        if (users.length === 0) {
+          console.log(`New user`);
+          // Register new Google user
+          await registerWithGoogle(email, oAuthId);
+          // Get the newly created user to set their database ID
+          const newUsers = await getUser(email);
+          if (newUsers.length > 0) {
+            // Important: Set the database ID on the user object
+            user.id = newUsers[0].id;
+          }
+        } else {
+          // Set the database ID for existing users
+          user.id = users[0].id;
+
+        }
         return true;
       }
-      
       return true;
     },
     
-    async jwt({ token, user, account, profile, isNewUser }) {
 
+    // Called whenever a JWT is created or updated
+    async jwt({ token, user }) {
       if (user) {
-        console.log('if user');
+        // Copy important user data to the token
+        // This ensures the data persists across sessions
+        token.id = user.id;
 
-        if (!profile) {
-          token.id = user.id;
-        }
-
-        else{
-          const dbUser = await getUser(user.email!);
-          if(dbUser.length === 0) return token;
-          token.id = dbUser[0].id;
-        }
-        
         token.email = user.email;
         token.stripeCustomerId = user.stripeCustomerId;
         token.subscriptionEndDate = user.subscriptionEndDate;
@@ -140,11 +137,16 @@ const handler = NextAuth({
 
       return token;
     },
+
+
+    // Called whenever a session is checked
     async session({ session, token }) {
       if (session.user) {
-        
+        // Copy data from the token to the session
+        // This makes the data available on the client side
+        session.user.id = token.id as string;
         session.user.email = token.email as string;
-        session.user.id = token.id as string; 
+
         session.user.stripeCustomerId = token.stripeCustomerId as string | null;
         session.user.subscriptionStatus = (token.subscriptionStatus as string) ?? 'inactive';
         session.user.subscriptionEndDate = token.subscriptionEndDate as Date | null;

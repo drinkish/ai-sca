@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Mic, MicOff } from 'lucide-react';
 import { Buffer } from 'buffer';
+
+import { Mic, MicOff } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function RealtimeAudioConsultation({ 
   role = 'patient'
