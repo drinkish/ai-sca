@@ -30,7 +30,7 @@ export async function POST() {
 
     // Get user from database
     console.log('usersz inside the stripe checkout session');
-    console.log(session.user.id);
+    console.log(session);
 
     const users = await db
       .select()

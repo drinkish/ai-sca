@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { getSession, useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 export default function SubscriptionClient() {
   const { data: session, status, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -20,12 +21,14 @@ export default function SubscriptionClient() {
       if (searchParams.get('success')) {
         try {
           // Force an immediate session refresh
+
           await update();
           // Wait a brief moment to ensure the session is updated
           await new Promise(resolve => setTimeout(resolve, 1000));
           console.log('Session updated:', session);
           // Redirect to start page after successful subscription
           router.replace('/start');
+
         } catch (error) {
           console.error('Failed to refresh session:', error);
         }
@@ -74,8 +77,13 @@ export default function SubscriptionClient() {
 
   // Debug logging
   useEffect(() => {
-    console.log(session?.user);
+
+    const checkSubStatus = async () => {
+      setIsSubscribed(session?.user?.subscriptionStatus === 'active' || false);
+    }
     
+    checkSubStatus();
+
     console.log('Current session status:', {
       isAuthenticated: !!session,
       subscriptionStatus: session?.user?.subscriptionStatus,
@@ -93,8 +101,11 @@ export default function SubscriptionClient() {
   }
 
   // Check if user has active subscription
-  const isSubscribed = session?.user?.subscriptionStatus === 'active';
-
+  // const isSubscribed = session?.user?.subscriptionStatus === 'active';
+  
+  console.log('Check if user has active subscription');
+  console.log(session?.user?.subscriptionStatus);
+  
   return (
     <div className="max-w-2xl mx-auto p-6 mt-16 space-y-8">
       <div className="text-center space-y-4">
