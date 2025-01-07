@@ -22,10 +22,12 @@ export default function SubscriptionClient() {
         try {
           // Force an immediate session refresh
 
-          await update();
-          // Wait a brief moment to ensure the session is updated
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          console.log('Session updated:', session);
+          setIsSubscribed(true);
+          
+          if (session?.user?.subscriptionStatus === 'active') {
+            router.replace('/subscription');
+            return;
+          }
           // Redirect to start page after successful subscription
           router.replace('/start');
 
