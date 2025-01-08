@@ -21,14 +21,21 @@ export default function SubscriptionClient() {
       if (searchParams.get('success')) {
         setIsLoading(true);
         try {
-          await update();
-          // Wait for session update
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Only redirect if we haven't already
-          if (window.location.href.includes('success=true')) {
-            window.location.href = '/start';
+          // Try to update session multiple times
+          for (let i = 0; i < 3; i++) {
+            await update();
+            // Check if subscription is active
+            const newSession = await getSession();
+            if (newSession?.user?.subscriptionStatus === 'active') {
+              window.location.href = '/start';
+              return;
+            }
+            // Wait before next attempt
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
+          
+          // If we get here, redirect anyway after max attempts
+          window.location.href = '/start';
         } catch (error) {
           console.error('Failed to refresh session:', error);
         } finally {
