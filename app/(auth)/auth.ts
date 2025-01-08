@@ -113,11 +113,20 @@ const handler = NextAuth({
         token.subscriptionEndDate = user.subscriptionEndDate;
       }
       else if(token.id) {
-        // Always fetch fresh subscription data
-        const subscriptionData = await getSubscription(token.id as string);
-        if (subscriptionData) {
-          token.subscriptionStatus = subscriptionData.status;
-          token.subscriptionEndDate = subscriptionData.currentPeriodEnd;
+        try {
+          const response = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/subscription-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: token.id })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            token.subscriptionStatus = data.status;
+            token.subscriptionEndDate = data.currentPeriodEnd;
+          }
+        } catch (error) {
+          console.error('Error checking subscription:', error);
         }
       }
 
