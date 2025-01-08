@@ -106,33 +106,19 @@ const handler = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         // Copy important user data to the token
-        // This ensures the data persists across sessions
         token.id = user.id;
-
         token.email = user.email;
         token.stripeCustomerId = user.stripeCustomerId;
         token.subscriptionStatus = user.subscriptionStatus;
         token.subscriptionEndDate = user.subscriptionEndDate;
       }
-      else if(token.id){
-
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}auth/subscription-status`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: token.id }),
-          });
-
-          if (response.ok) {
-            const userSubscription = await response.json();            
-            token.subscriptionStatus = userSubscription?.status ?? 'inactive';
-          } else {
-            console.error('Failed to fetch subscription via API');
-          }
-        } catch (error) {
-          console.error('Error fetching subscription:', error);
+      else if(token.id) {
+        // Always fetch fresh subscription data
+        const subscriptionData = await getSubscription(token.id as string);
+        if (subscriptionData) {
+          token.subscriptionStatus = subscriptionData.status;
+          token.subscriptionEndDate = subscriptionData.currentPeriodEnd;
         }
-
       }
 
       return token;

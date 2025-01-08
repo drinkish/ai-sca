@@ -19,23 +19,25 @@ export default function SubscriptionClient() {
   useEffect(() => {
     const handleSubscriptionSuccess = async () => {
       if (searchParams.get('success')) {
+        setIsLoading(true);
         try {
-          // Force an immediate session refresh
-
           await update();
-          // Wait a brief moment to ensure the session is updated
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          console.log('Session updated:', session);
-          // Redirect to start page after successful subscription
-          router.replace('/start');
-
+          // Wait for session update
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Only redirect if we haven't already
+          if (window.location.href.includes('success=true')) {
+            window.location.href = '/start';
+          }
         } catch (error) {
           console.error('Failed to refresh session:', error);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
     handleSubscriptionSuccess();
-  }, [searchParams, update, router, session]);
+  }, [searchParams, update]);
   // Handle subscription cancellation
   useEffect(() => {
     if (searchParams.get('canceled')) {
