@@ -69,4 +69,5 @@ export const config = {
      */
     '/((?!api/stripe/webhook|_next/static|_next/image|favicon.ico).*)',
   ],
+  runtime: 'nodejs'
 };
