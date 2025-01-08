@@ -41,7 +41,7 @@ export default function SubscriptionClient() {
         }
       }
     };
-
+//
     handleSubscriptionSuccess();
   }, [searchParams, update, router]);
 
