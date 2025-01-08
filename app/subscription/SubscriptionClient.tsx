@@ -35,9 +35,9 @@ export default function SubscriptionClient() {
             
             // Check if subscription is now active
             if (newSession?.user?.subscriptionStatus === 'active') {
-              console.log('Subscription is now active!');
-              setIsSubscribed(true);
-              router.replace('/start');
+              console.log('Subscription is now active, redirecting to start page...');
+              // Use window.location.href for a hard redirect
+              window.location.href = '/start';
               return;
             }
             
@@ -47,7 +47,7 @@ export default function SubscriptionClient() {
           
           console.log('Failed to confirm subscription after multiple attempts');
           // Redirect anyway after max attempts
-          router.replace('/start');
+          window.location.href = '/start';
         } catch (error) {
           console.error('Failed to refresh session:', error);
         }
@@ -55,7 +55,7 @@ export default function SubscriptionClient() {
     };
 
     handleSubscriptionSuccess();
-  }, [searchParams, update, router]);
+  }, [searchParams, update]);
 
   // Handle subscription cancellation
   useEffect(() => {
