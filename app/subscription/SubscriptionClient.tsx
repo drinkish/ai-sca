@@ -85,7 +85,7 @@ export default function SubscriptionClient() {
       }
       
       window.location.assign(url);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error:', error);
       setError(error instanceof Error ? error.message : "Failed to start checkout process");
     } finally {

@@ -44,8 +44,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    if (authResult instanceof Response) {
-      return authResult;
+    // Check if authResult is a Response
+    if (authResult && typeof authResult === 'object' && 'status' in (authResult as object)) {
+      return authResult as Response;
     }
   } else {
     // Default behavior if authorized callback is not defined
