@@ -5,31 +5,24 @@ import type { NextRequest } from 'next/server';
 export const authConfig = {
   pages: {
     signIn: "/login",
-    newUser: "/start",
+    newUser: "/subscription?new=true",
   },
   providers: [],
   callbacks: {
     authorized({ auth, request }: { auth: any; request: NextRequest }) {
-      let isLoggedIn = !!auth?.user;
-      let isOnChat = request.nextUrl.pathname.startsWith("/");
-      let isOnRegister = request.nextUrl.pathname.startsWith("/register");
-      let isOnLogin = request.nextUrl.pathname.startsWith("/login");
-
-      if (isLoggedIn && (isOnLogin || isOnRegister)) {
-        return Response.redirect(new URL("/start", request.nextUrl));
-      }
-
-      if (isOnRegister || isOnLogin) {
+      const isLoggedIn = !!auth?.user;
+      const path = request.nextUrl.pathname;
+      
+      // Public paths that don't require auth checks
+      if (path.startsWith('/login') || 
+          path.startsWith('/register') || 
+          path.startsWith('/subscription')) {
         return true;
       }
 
-      if (isOnChat) {
-        if (isLoggedIn) return true;
-        return false;
-      }
-
-      if (isLoggedIn) {
-        return Response.redirect(new URL("/start", request.nextUrl));
+      // Protected paths
+      if (path.startsWith('/')) {
+        return isLoggedIn;
       }
 
       return true;
