@@ -45,7 +45,7 @@ export async function POST(request: Request) {
         throw new Error('Invalid or missing userId in session metadata');
       }
 
-      const userId = metadata.userId; // Store userId for type inference
+      const userId = metadata.userId;
 
       // Get the subscription details
       const stripeSubscription = await stripe.subscriptions.retrieve(
@@ -59,61 +59,67 @@ export async function POST(request: Request) {
       });
 
       // Begin transaction to update both user and subscription
-      await db.transaction(async (tx) => {
-        // 1. Update user's Stripe customer ID
-        await tx
-          .update(user)
-          .set({ stripeCustomerId: checkoutSession.customer as string })
-          .where(eq(user.id, userId));
+      try {
+        await db.transaction(async (tx) => {
+          // 1. Update user's Stripe customer ID
+          await tx
+            .update(user)
+            .set({ stripeCustomerId: checkoutSession.customer as string })
+            .where(eq(user.id, userId));
 
-        console.log('Updated user stripe customer ID');
+          console.log('Updated user stripe customer ID');
 
-        // 2. Create or update subscription
-        await tx
-          .insert(subscription)
-          .values({
-            userId,
-            stripeSubscriptionId: stripeSubscription.id,
-            status: stripeSubscription.status,
-            priceId: process.env.STRIPE_PRICE_ID!,
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
-          })
-          .onConflictDoUpdate({
-            target: [subscription.userId],
-            set: {
+          // 2. Create or update subscription with active status
+          await tx
+            .insert(subscription)
+            .values({
+              userId,
               stripeSubscriptionId: stripeSubscription.id,
-              status: stripeSubscription.status,
+              status: 'active', // Explicitly set to active
               priceId: process.env.STRIPE_PRICE_ID!,
               currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
               currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
-            }
-          });
+            })
+            .onConflictDoUpdate({
+              target: [subscription.userId],
+              set: {
+                stripeSubscriptionId: stripeSubscription.id,
+                status: 'active', // Explicitly set to active
+                priceId: process.env.STRIPE_PRICE_ID!,
+                currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
+              }
+            });
 
-        console.log('Upserted subscription record');
-      });
+          console.log('Upserted subscription record');
+        });
 
-      // Verify the updates (optional, but good for debugging)
-      const [updatedUser] = await db
-        .select()
-        .from(user)
-        .where(eq(user.id, userId));
+        // Verify the updates
+        const [updatedUser] = await db
+          .select()
+          .from(user)
+          .where(eq(user.id, userId));
 
-      console.log('Verified user data after update:', {
-        id: updatedUser.id,
-        stripeCustomerId: updatedUser.stripeCustomerId
-      });
+        console.log('Verified user data after update:', {
+          id: updatedUser.id,
+          stripeCustomerId: updatedUser.stripeCustomerId
+        });
 
-      const [subscriptionRecord] = await db
-        .select()
-        .from(subscription)
-        .where(eq(subscription.userId, userId));
+        const [subscriptionRecord] = await db
+          .select()
+          .from(subscription)
+          .where(eq(subscription.userId, userId));
 
-      console.log('Verified subscription record:', {
-        id: subscriptionRecord.id,
-        status: subscriptionRecord.status,
-        stripeSubscriptionId: subscriptionRecord.stripeSubscriptionId
-      });
+        console.log('Verified subscription record:', {
+          id: subscriptionRecord.id,
+          status: subscriptionRecord.status,
+          stripeSubscriptionId: subscriptionRecord.stripeSubscriptionId
+        });
+
+      } catch (error) {
+        console.error('Error in database transaction:', error);
+        throw error;
+      }
     }
 
     // adding email functionality

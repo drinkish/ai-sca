@@ -20,17 +20,34 @@ export default function SubscriptionClient() {
     const handleSubscriptionSuccess = async () => {
       if (searchParams.get('success')) {
         try {
-          // Force an immediate session refresh
-
-          setIsSubscribed(true);
+          console.log('Payment successful, updating session...');
           
-          if (session?.user?.subscriptionStatus === 'active') {
-            router.replace('/subscription');
-            return;
+          // Multiple attempts to refresh session
+          for (let i = 0; i < 5; i++) {
+            console.log(`Attempt ${i + 1} to refresh session...`);
+            
+            // Force a session refresh
+            await update();
+            
+            // Get fresh session data
+            const newSession = await getSession();
+            console.log('Current session state:', newSession?.user);
+            
+            // Check if subscription is now active
+            if (newSession?.user?.subscriptionStatus === 'active') {
+              console.log('Subscription is now active!');
+              setIsSubscribed(true);
+              router.replace('/start');
+              return;
+            }
+            
+            // Wait before next attempt
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
-          // Redirect to start page after successful subscription
+          
+          console.log('Failed to confirm subscription after multiple attempts');
+          // Redirect anyway after max attempts
           router.replace('/start');
-
         } catch (error) {
           console.error('Failed to refresh session:', error);
         }
@@ -38,7 +55,7 @@ export default function SubscriptionClient() {
     };
 
     handleSubscriptionSuccess();
-  }, [searchParams, update, router, session]);
+  }, [searchParams, update, router]);
 
   // Handle subscription cancellation
   useEffect(() => {
