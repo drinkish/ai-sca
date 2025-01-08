@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow all API routes except those that need auth
+  // Allow public API routes
   if (request.nextUrl.pathname.startsWith('/api/') && 
       !request.nextUrl.pathname.startsWith('/api/chat')) {
     return NextResponse.next();
@@ -34,12 +34,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Protected routes that need subscription
-  const protectedRoutes = ['/chat', '/sca-generator', '/dashboard'];
-  if (protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
-    if (session.user.subscriptionStatus !== 'active') {
-      return NextResponse.redirect(new URL('/subscription', request.url));
-    }
+  // All routes that require subscription
+  const subscriptionRoutes = ['/chat', '/sca-generator', '/dashboard'];
+  
+  // Check if current path requires subscription
+  const requiresSubscription = subscriptionRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  if (requiresSubscription && session.user.subscriptionStatus !== 'active') {
+    return NextResponse.redirect(new URL('/subscription', request.url));
   }
 
   return NextResponse.next();
