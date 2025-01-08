@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    if (authResult instanceof Response) {
+    if (authResult && typeof authResult === 'object' && 'status' in authResult) {
       return authResult;
     }
   } else {
