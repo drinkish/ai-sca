@@ -17,36 +17,25 @@ export default function SubscriptionClient() {
   
   // Handle redirect status and session refresh
   useEffect(() => {
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 2000;
-
-    const checkSubscription = async (retryCount: number = 0): Promise<boolean> => {
-      await update();
-      const newSession = await getSession();
-      return newSession?.user?.subscriptionStatus === 'active';
-    };
-
     const handleSubscriptionSuccess = async () => {
       if (searchParams.get('success')) {
         setIsCheckingSubscription(true);
         try {
-          let retryCount = 0;
-          let isActive = await checkSubscription();
-
-          while (!isActive && retryCount < MAX_RETRIES) {
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-            isActive = await checkSubscription(retryCount);
-            retryCount++;
-          }
-
-          if (isActive) {
+          // Single attempt to update session
+          await update();
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for webhook to process
+          
+          const newSession = await getSession();
+          if (newSession?.user?.subscriptionStatus === 'active') {
             router.push('/start');
           } else {
-            setError('Subscription status not updated. Please contact support if this persists.');
+            setError('Please refresh the page if you cannot access premium features.');
+            router.push('/start');
           }
         } catch (error) {
           console.error('Failed to refresh session:', error);
           setError('Failed to verify subscription. Please try refreshing the page.');
+          router.push('/start');
         } finally {
           setIsCheckingSubscription(false);
         }
