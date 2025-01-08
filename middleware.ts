@@ -6,51 +6,53 @@ import type { NextRequest } from 'next/server';
 
 
 export async function middleware(request: NextRequest) {
-  // Public paths that don't need auth
-  const publicPaths = [
-    '/api/stripe/webhook',
-    '/forgot-password',
-    '/reset-password',
-    '/login',
-    '/register',
-    '/subscription'
-  ];
+  const pathname = request.nextUrl.pathname;
 
-  // Check if the path is public
-  if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
+  // Skip middleware for static files and webhooks
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname === '/api/stripe/webhook'
+  ) {
     return NextResponse.next();
   }
 
-  // Allow public API routes
-  if (request.nextUrl.pathname.startsWith('/api/') && 
-      !request.nextUrl.pathname.startsWith('/api/chat')) {
+  // Public routes - allow access
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/subscription') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password')
+  ) {
     return NextResponse.next();
   }
 
+  // Get session once for all checks
   const session = await auth();
-
-  // If not logged in, redirect to login
+  
+  // Not logged in - redirect to login
   if (!session) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // All routes that require subscription
-  const subscriptionRoutes = ['/chat', '/sca-generator', '/dashboard'];
-  
-  // Check if current path requires subscription
-  const requiresSubscription = subscriptionRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  if (requiresSubscription && session.user.subscriptionStatus !== 'active') {
-    return NextResponse.redirect(new URL('/subscription', request.url));
+  // Check subscription for protected routes
+  if (
+    pathname.startsWith('/chat') ||
+    pathname.startsWith('/sca-generator') ||
+    pathname.startsWith('/dashboard')
+  ) {
+    if (session.user.subscriptionStatus !== 'active') {
+      return NextResponse.redirect(new URL('/subscription', request.url));
+    }
   }
 
   return NextResponse.next();
 }
 
+// Update matcher to be more specific
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!api/stripe/webhook|_next/static|_next/image|favicon.ico).*)',
   ],
 };
