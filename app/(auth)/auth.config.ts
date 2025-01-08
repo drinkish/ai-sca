@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 export const authConfig = {
   pages: {
     signIn: "/login",
-    newUser: "/subscription?new=true",
+    newUser: "/start",
   },
   providers: [],
   callbacks: {
