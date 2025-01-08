@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 export default function SubscriptionClient() {
   const { data: session, status, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingSubscription, setIsCheckingSubscription] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -19,32 +19,23 @@ export default function SubscriptionClient() {
   useEffect(() => {
     const handleSubscriptionSuccess = async () => {
       if (searchParams.get('success')) {
-        setIsCheckingSubscription(true);
         try {
-          // Single attempt to update session
+          // Force an immediate session refresh
+
           await update();
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for webhook to process
-          
-          const newSession = await getSession();
-          if (newSession?.user?.subscriptionStatus === 'active') {
-            router.push('/start');
-          } else {
-            setError('Please refresh the page if you cannot access premium features.');
-            router.push('/start');
-          }
+          // Wait a brief moment to ensure the session is updated
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log('Session updated:', session);
+          // Redirect to start page after successful subscription
+          router.replace('/start');
+
         } catch (error) {
           console.error('Failed to refresh session:', error);
-          setError('Failed to verify subscription. Please try refreshing the page.');
-          router.push('/start');
-        } finally {
-          setIsCheckingSubscription(false);
         }
       }
     };
-//
     handleSubscriptionSuccess();
-  }, [searchParams, update, router]);
-
+  }, [searchParams, update, router, session]);
   // Handle subscription cancellation
   useEffect(() => {
     if (searchParams.get('canceled')) {
@@ -52,7 +43,6 @@ export default function SubscriptionClient() {
       router.replace('/subscription');
     }
   }, [searchParams, router]);
-
   const handleSubscribe = async () => {
     setIsLoading(true);
     setError(null);
@@ -61,12 +51,10 @@ export default function SubscriptionClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to start checkout process");
       }
-
       const { url } = await response.json();
       
       if (!url) {
@@ -74,7 +62,7 @@ export default function SubscriptionClient() {
       }
       
       window.location.assign(url);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error:', error);
       setError(error instanceof Error ? error.message : "Failed to start checkout process");
     } finally {
@@ -82,20 +70,37 @@ export default function SubscriptionClient() {
     }
   };
 
-  // Loading states
-  if (status === 'loading' || isCheckingSubscription) {
+  // Debug logging
+  useEffect(() => {
+
+    const checkSubStatus = async () => {
+      setIsSubscribed(session?.user?.subscriptionStatus === 'active' || false);
+    }
+
+    checkSubStatus();
+
+    console.log('Current session status:', {
+      isAuthenticated: !!session,
+      subscriptionStatus: session?.user?.subscriptionStatus,
+      loading: status === 'loading'
+    });
+  }, [session, status]);
+  // Loading state
+  if (status === 'loading') {
     return (
-      <div className="flex flex-col justify-center items-center min-h-[200px] pt-20 gap-4">
+      <div className="flex justify-center items-center min-h-[200px] pt-20">
         <Loader2 className="h-6 w-6 animate-spin" />
-        <p className="text-sm text-muted-foreground">
-          {isCheckingSubscription ? 'Verifying subscription...' : 'Loading...'}
-        </p>
       </div>
     );
   }
 
-  const isSubscribed = session?.user?.subscriptionStatus === 'active';
-  
+  // Check if user has active subscription
+
+  // const isSubscribed = session?.user?.subscriptionStatus === 'active';
+
+  console.log('Check if user has active subscription');
+  console.log(session?.user?.subscriptionStatus);
+
   return (
     <div className="max-w-2xl mx-auto p-6 mt-16 space-y-8">
       <div className="text-center space-y-4">
@@ -129,6 +134,14 @@ export default function SubscriptionClient() {
                 </li>
               </ul>
             </div>
+            {/* Optional: Add subscription management button */}
+            {/* <Button
+              onClick={() => router.push('/account/billing')}
+              variant="outline"
+              className="mt-4"
+            >
+              Manage Subscription
+            </Button> */}
           </div>
         ) : (
           <div className="space-y-6">

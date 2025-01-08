@@ -10,7 +10,6 @@ import { subscription } from "@/db/schema";
 
 import { registerWithGoogle } from "./actions";
 import { authConfig } from "./auth.config";
-
 const handler = NextAuth({
   ...authConfig,
   providers: [
@@ -76,7 +75,7 @@ const handler = NextAuth({
 
         const email = user?.email;
         const oAuthId = user?.id;
-        
+
         if(typeof email !== 'string' || typeof oAuthId !== 'string') return false;
 
 
@@ -101,38 +100,39 @@ const handler = NextAuth({
       }
       return true;
     },
-    
+
 
     // Called whenever a JWT is created or updated
     async jwt({ token, user }) {
       if (user) {
         // Copy important user data to the token
+        // This ensures the data persists across sessions
         token.id = user.id;
+
         token.email = user.email;
         token.stripeCustomerId = user.stripeCustomerId;
         token.subscriptionStatus = user.subscriptionStatus;
         token.subscriptionEndDate = user.subscriptionEndDate;
       }
+      else if(token.id){
 
-      // Always fetch fresh subscription data
-      if (token.id) {
         try {
-          const subscriptionData = await getSubscription(token.id as string);
-          console.log('Fetched subscription data:', subscriptionData);
-          
-          if (subscriptionData) {
-            token.subscriptionStatus = subscriptionData.status;
-            token.subscriptionEndDate = subscriptionData.currentPeriodEnd;
-            console.log('Updated token with subscription:', token);
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}auth/subscription-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: token.id }),
+          });
+
+          if (response.ok) {
+            const userSubscription = await response.json();            
+            token.subscriptionStatus = userSubscription?.status ?? 'inactive';
           } else {
-            token.subscriptionStatus = 'inactive';
-            token.subscriptionEndDate = null;
-            console.log('No subscription found, set to inactive');
+            console.error('Failed to fetch subscription via API');
           }
         } catch (error) {
-          console.error('Error fetching subscription in JWT callback:', error);
-          token.subscriptionStatus = 'inactive';
+          console.error('Error fetching subscription:', error);
         }
+
       }
 
       return token;
@@ -143,18 +143,17 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         // Copy data from the token to the session
+        // This makes the data available on the client side
         session.user.id = token.id as string;
         session.user.email = token.email as string;
-        session.user.stripeCustomerId = token.stripeCustomerId as string | null;
-        session.user.subscriptionStatus = token.subscriptionStatus as string;
-        session.user.subscriptionEndDate = token.subscriptionEndDate as Date | null;
 
-        console.log('Session updated with subscription status:', session.user.subscriptionStatus);
+        session.user.stripeCustomerId = token.stripeCustomerId as string | null;
+        session.user.subscriptionStatus = (token.subscriptionStatus as string) ?? 'inactive';
+        session.user.subscriptionEndDate = token.subscriptionEndDate as Date | null;
       }
-      
+
       return session;
     },
   },
 });
-
 export const { auth, handlers, signIn, signOut } = handler;
