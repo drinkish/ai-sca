@@ -10,52 +10,51 @@ import { Button } from "@/components/ui/button";
 export default function SubscriptionClient() {
   const { data: session, status, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
   
   // Handle redirect status and session refresh
   useEffect(() => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2000;
+
+    const checkSubscription = async (retryCount: number = 0): Promise<boolean> => {
+      await update();
+      const newSession = await getSession();
+      return newSession?.user?.subscriptionStatus === 'active';
+    };
+
     const handleSubscriptionSuccess = async () => {
       if (searchParams.get('success')) {
+        setIsCheckingSubscription(true);
         try {
-          console.log('Payment successful, updating session...');
-          
-          // Multiple attempts to refresh session
-          for (let i = 0; i < 5; i++) {
-            console.log(`Attempt ${i + 1} to refresh session...`);
-            
-            // Force a session refresh
-            await update();
-            
-            // Get fresh session data
-            const newSession = await getSession();
-            console.log('Current session state:', newSession?.user);
-            
-            // Check if subscription is now active
-            if (newSession?.user?.subscriptionStatus === 'active') {
-              console.log('Subscription is now active, redirecting to start page...');
-              // Use window.location.href for a hard redirect
-              window.location.href = '/start';
-              return;
-            }
-            
-            // Wait before next attempt
-            await new Promise(resolve => setTimeout(resolve, 2000));
+          let retryCount = 0;
+          let isActive = await checkSubscription();
+
+          while (!isActive && retryCount < MAX_RETRIES) {
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            isActive = await checkSubscription(retryCount);
+            retryCount++;
           }
-          
-          console.log('Failed to confirm subscription after multiple attempts');
-          // Redirect anyway after max attempts
-          window.location.href = '/start';
+
+          if (isActive) {
+            router.push('/start');
+          } else {
+            setError('Subscription status not updated. Please contact support if this persists.');
+          }
         } catch (error) {
           console.error('Failed to refresh session:', error);
+          setError('Failed to verify subscription. Please try refreshing the page.');
+        } finally {
+          setIsCheckingSubscription(false);
         }
       }
     };
 
     handleSubscriptionSuccess();
-  }, [searchParams, update]);
+  }, [searchParams, update, router]);
 
   // Handle subscription cancellation
   useEffect(() => {
@@ -94,36 +93,19 @@ export default function SubscriptionClient() {
     }
   };
 
-  // Debug logging
-  useEffect(() => {
-
-    const checkSubStatus = async () => {
-      setIsSubscribed(session?.user?.subscriptionStatus === 'active' || false);
-    }
-    
-    checkSubStatus();
-
-    console.log('Current session status:', {
-      isAuthenticated: !!session,
-      subscriptionStatus: session?.user?.subscriptionStatus,
-      loading: status === 'loading'
-    });
-  }, [session, status]);
-
-  // Loading state
-  if (status === 'loading') {
+  // Loading states
+  if (status === 'loading' || isCheckingSubscription) {
     return (
-      <div className="flex justify-center items-center min-h-[200px] pt-20">
+      <div className="flex flex-col justify-center items-center min-h-[200px] pt-20 gap-4">
         <Loader2 className="h-6 w-6 animate-spin" />
+        <p className="text-sm text-muted-foreground">
+          {isCheckingSubscription ? 'Verifying subscription...' : 'Loading...'}
+        </p>
       </div>
     );
   }
 
-  // Check if user has active subscription
-  // const isSubscribed = session?.user?.subscriptionStatus === 'active';
-  
-  console.log('Check if user has active subscription');
-  console.log(session?.user?.subscriptionStatus);
+  const isSubscribed = session?.user?.subscriptionStatus === 'active';
   
   return (
     <div className="max-w-2xl mx-auto p-6 mt-16 space-y-8">
@@ -158,14 +140,6 @@ export default function SubscriptionClient() {
                 </li>
               </ul>
             </div>
-            {/* Optional: Add subscription management button */}
-            {/* <Button
-              onClick={() => router.push('/account/billing')}
-              variant="outline"
-              className="mt-4"
-            >
-              Manage Subscription
-            </Button> */}
           </div>
         ) : (
           <div className="space-y-6">
