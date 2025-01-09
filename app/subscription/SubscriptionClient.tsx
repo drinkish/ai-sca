@@ -20,21 +20,32 @@ export default function SubscriptionClient() {
     const handleSubscriptionSuccess = async () => {
       if (searchParams.get('success')) {
         setIsLoading(true);
+        let attempts = 0;
+        const maxAttempts = 5;
+
         try {
-          // Try to update session multiple times
-          for (let i = 0; i < 3; i++) {
+          while (attempts < maxAttempts) {
+            console.log(`Attempt ${attempts + 1} to refresh session`);
+            
+            // Force a session update
             await update();
-            // Check if subscription is active
+            
+            // Get the latest session
             const newSession = await getSession();
+            console.log('Current session status:', newSession?.user?.subscriptionStatus);
+
             if (newSession?.user?.subscriptionStatus === 'active') {
+              console.log('Subscription active, redirecting to start page');
               window.location.href = '/start';
               return;
             }
+
             // Wait before next attempt
             await new Promise(resolve => setTimeout(resolve, 2000));
+            attempts++;
           }
-          
-          // If we get here, redirect anyway after max attempts
+
+          console.log('Max attempts reached, redirecting anyway');
           window.location.href = '/start';
         } catch (error) {
           console.error('Failed to refresh session:', error);
@@ -43,6 +54,7 @@ export default function SubscriptionClient() {
         }
       }
     };
+
     handleSubscriptionSuccess();
   }, [searchParams, update]);
   // Handle subscription cancellation

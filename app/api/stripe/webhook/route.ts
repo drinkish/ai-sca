@@ -95,11 +95,24 @@ export async function POST(request: Request) {
 
         // Force session refresh by making a request to the subscription status endpoint
         try {
-          await fetch(`${process.env.NEXTAUTH_URL}/api/auth/subscription-status`, {
+          const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+          console.log('Attempting to refresh session for user:', userId);
+          
+          const response = await fetch(`${baseUrl}/api/auth/subscription-status`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Origin': baseUrl as string
+            },
             body: JSON.stringify({ userId })
           });
+
+          if (!response.ok) {
+            throw new Error(`Failed to refresh session: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log('Session refresh response:', data);
         } catch (error) {
           console.error('Error refreshing session:', error);
         }
