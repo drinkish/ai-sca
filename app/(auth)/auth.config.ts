@@ -11,27 +11,25 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }: { auth: any; request: NextRequest }) {
       let isLoggedIn = !!auth?.user;
-      let isOnChat = request.nextUrl.pathname.startsWith("/");
-      let isOnRegister = request.nextUrl.pathname.startsWith("/register");
-      let isOnLogin = request.nextUrl.pathname.startsWith("/login");
-
-      if (isLoggedIn && (isOnLogin || isOnRegister)) {
+      let isOnAuth = request.nextUrl.pathname.startsWith("/register") || 
+                     request.nextUrl.pathname.startsWith("/login");
+      
+      // If logged in and trying to access auth pages, redirect to /start
+      if (isLoggedIn && isOnAuth) {
         return Response.redirect(new URL("/start", request.nextUrl));
       }
 
-      if (isOnRegister || isOnLogin) {
-        return true;
-      }
+      // // If trying to access auth pages, allow access
+      // if (isOnAuth) {
+      //   return true;
+      // }
 
-      if (isOnChat) {
-        if (isLoggedIn) return true;
-        return false;
-      }
+      // // For all other routes, require authentication
+      // if (!isLoggedIn) {
+      //   return false;
+      // }
 
-      if (isLoggedIn) {
-        return Response.redirect(new URL("/start", request.nextUrl));
-      }
-
+      // Allow logged in users to access all other routes
       return true;
     },
   },

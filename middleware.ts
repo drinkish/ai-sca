@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  if (request.nextUrl.pathname === '/forgot-password' || request.nextUrl.pathname === '/reset-password') {
+  if (request.nextUrl.pathname === '/forgot-password' || request.nextUrl.pathname === '/reset-password' ) {
     return NextResponse.next();
   }
 
@@ -23,12 +23,14 @@ export async function middleware(request: NextRequest) {
   const session = await auth();
 
   // Check if the route is protected (chat or sca-generator)
-  if (request.nextUrl.pathname.startsWith('/chat') || request.nextUrl.pathname.startsWith('/sca-generator')) {
+  if (request.nextUrl.pathname.startsWith('/chat') || request.nextUrl.pathname.startsWith('/sca-generator')  ) {
     if (!session) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
     // Check subscription status
     if (session.user.subscriptionStatus !== 'active') {
+      console.log('here');
+      
       return NextResponse.redirect(new URL('/subscription', request.url));
     }
   }  
@@ -40,20 +42,29 @@ export async function middleware(request: NextRequest) {
       request
     });
 
-    if (authResult === false) {
-      return NextResponse.redirect(new URL('/login', request.url));
+    // Only redirect to /login if not authorized and not already on auth pages
+    if (authResult !== true) {
+      const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
+      request.nextUrl.pathname.startsWith('/register');
+      if (!isAuthPage) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
     }
 
+    // Allow the response if it's a redirect
     if (authResult instanceof Response) {
       return authResult;
     }
   } else {
-    // Default behavior if authorized callback is not defined
-    if (!session && !request.nextUrl.pathname.startsWith('/login') && !request.nextUrl.pathname.startsWith('/register')) {
+    // Default behavior if no authorized callback
+    if (!session && 
+        !request.nextUrl.pathname.startsWith('/login') && 
+        !request.nextUrl.pathname.startsWith('/register')) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }
 
+  // Allow the request to continue if authorized
   return NextResponse.next();
 }
 

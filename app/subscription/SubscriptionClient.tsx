@@ -28,6 +28,7 @@ export default function SubscriptionClient() {
             router.replace('/subscription');
             return;
           }
+          
           // Redirect to start page after successful subscription
           router.replace('/start');
 
