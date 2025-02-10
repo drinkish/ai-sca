@@ -28,6 +28,21 @@ export const authConfig = {
       // if (!isLoggedIn) {
       //   return false;
       // }
+      const isLoggedIn = !!auth?.user;
+      const path = request.nextUrl.pathname;
+      
+      // Public paths that don't require auth checks
+      if (path.startsWith('/login') || 
+          path.startsWith('/register') || 
+          path.startsWith('/subscription')) {
+        return true;
+      }
+
+      // Protected paths
+      if (path.startsWith('/')) {
+        return isLoggedIn;
+      }
+
 
       // Allow logged in users to access all other routes
       return true;

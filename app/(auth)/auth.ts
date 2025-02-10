@@ -10,7 +10,6 @@ import { subscription } from "@/db/schema";
 
 import { registerWithGoogle } from "./actions";
 import { authConfig } from "./auth.config";
-
 const handler = NextAuth({
   ...authConfig,
   providers: [
@@ -76,7 +75,7 @@ const handler = NextAuth({
 
         const email = user?.email;
         const oAuthId = user?.id;
-        
+
         if(typeof email !== 'string' || typeof oAuthId !== 'string') return false;
 
 
@@ -101,38 +100,34 @@ const handler = NextAuth({
       }
       return true;
     },
-    
+
 
     // Called whenever a JWT is created or updated
     async jwt({ token, user }) {
       if (user) {
         // Copy important user data to the token
-        // This ensures the data persists across sessions
         token.id = user.id;
-
         token.email = user.email;
         token.stripeCustomerId = user.stripeCustomerId;
+        token.subscriptionStatus = user.subscriptionStatus;
         token.subscriptionEndDate = user.subscriptionEndDate;
       }
-      else if(token.id){
-
+      else if(token.id) {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}auth/subscription-status`, {
+          const response = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/subscription-status`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: token.id }),
+            body: JSON.stringify({ userId: token.id })
           });
-      
+
           if (response.ok) {
-            const userSubscription = await response.json();            
-            token.subscriptionStatus = userSubscription?.status ?? 'inactive';
-          } else {
-            console.error('Failed to fetch subscription via API');
+            const data = await response.json();
+            token.subscriptionStatus = data.status;
+            token.subscriptionEndDate = data.currentPeriodEnd;
           }
         } catch (error) {
-          console.error('Error fetching subscription:', error);
+          console.error('Error checking subscription:', error);
         }
-
       }
 
       return token;
@@ -151,10 +146,9 @@ const handler = NextAuth({
         session.user.subscriptionStatus = (token.subscriptionStatus as string) ?? 'inactive';
         session.user.subscriptionEndDate = token.subscriptionEndDate as Date | null;
       }
-      
+
       return session;
     },
   },
 });
-
 export const { auth, handlers, signIn, signOut } = handler;

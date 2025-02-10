@@ -18,7 +18,7 @@ export default function StartPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <Link href={"/"} >
+        <Link href="/" >
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader>
               <CardTitle>AI Tutor</CardTitle>
@@ -32,7 +32,8 @@ export default function StartPage() {
           </Card>
         </Link>
 
-        <Link href={"/sca-generator"} >
+
+        <Link href="/sca-generator" >
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader>
               <CardTitle>SCA Cases</CardTitle>

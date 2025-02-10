@@ -5,7 +5,7 @@ import { db } from "@/db/index";
 import { subscription } from "@/db/schema";
 
 export async function POST(request: NextRequest) {
-  
+
   try {
     const body = await request.json();
     const { userId } = body;
@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
       .from(subscription)
       .where(eq(subscription.userId, userId))
       .limit(1);
-    
+
     return NextResponse.json(userSubscription || null);
-    
+
   } catch (error) {
     console.error('Error fetching subscription:', error);
     return NextResponse.json(
