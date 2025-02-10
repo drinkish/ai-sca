@@ -5,6 +5,13 @@ import { auth } from '@/app/(auth)/auth';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+
+  // Skip auth check for Stripe webhook
+  if (request.nextUrl.pathname === '/api/stripe/webhook') {
+    return NextResponse.next();
+  }
+  
+  if (request.nextUrl.pathname === '/forgot-password' || request.nextUrl.pathname === '/reset-password' ) {
   const pathname = request.nextUrl.pathname;
 
   // Skip middleware for static files and webhooks
@@ -13,6 +20,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/favicon.ico') ||
     pathname === '/api/stripe/webhook'
   ) {
+
     return NextResponse.next();
   }
 
@@ -36,6 +44,46 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Check if the route is protected (chat or sca-generator)
+  if (request.nextUrl.pathname.startsWith('/chat') || request.nextUrl.pathname.startsWith('/sca-generator')  ) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    // Check subscription status
+    if (session.user.subscriptionStatus !== 'active') {
+      console.log('here');
+      
+      return NextResponse.redirect(new URL('/subscription', request.url));
+    }
+  }  
+
+  // Check if the authorized callback exists and use it
+  if (typeof authConfig.callbacks?.authorized === 'function') {
+    const authResult = await authConfig.callbacks.authorized({
+      auth: session,
+      request
+    });
+
+    // Only redirect to /login if not authorized and not already on auth pages
+    if (authResult !== true) {
+      const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
+      request.nextUrl.pathname.startsWith('/register');
+      if (!isAuthPage) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+    }
+
+    // Allow the response if it's a redirect
+    if (authResult instanceof Response) {
+      return authResult;
+    }
+  } else {
+    // Default behavior if no authorized callback
+    if (!session && 
+        !request.nextUrl.pathname.startsWith('/login') && 
+        !request.nextUrl.pathname.startsWith('/register')) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   // Premium routes that require subscription
   const premiumRoutes = ['/chat', '/sca-generator', '/dashboard'];
   const isPremiumRoute = premiumRoutes.some(route => pathname.startsWith(route));
@@ -45,8 +93,10 @@ export async function middleware(request: NextRequest) {
     if (!session.user?.subscriptionStatus || session.user.subscriptionStatus !== 'active') {
       return NextResponse.redirect(new URL('/subscription', request.url));
     }
+
   }
 
+  // Allow the request to continue if authorized
   return NextResponse.next();
 }
 
