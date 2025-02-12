@@ -1,4 +1,3 @@
-// app/api/stripe/create-checkout-session/route.ts
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -7,18 +6,15 @@ import { auth } from "@/app/(auth)/auth";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { stripe } from "@/lib/stripe";
-
 export async function POST() {
   try {
     // Verify environment variables
     if (!process.env.STRIPE_PRICE_ID) {
       throw new Error("Missing STRIPE_PRICE_ID");
     }
-
     if (!process.env.NEXT_PUBLIC_APP_URL) {
       throw new Error("Missing NEXT_PUBLIC_APP_URL");
     }
-
     // Get user session
     const session = await auth();
     if (!session?.user) {
@@ -36,16 +32,13 @@ export async function POST() {
       .select()
       .from(user)
       .where(eq(user.id, session.user.id));
-
     if (!users.length) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
       );
     }
-
     const currentUser = users[0];
-
     // Create checkout session with conditional customer identification
     const checkoutSession = await stripe.checkout.sessions.create(
       currentUser.stripeCustomerId
@@ -86,11 +79,9 @@ export async function POST() {
             allow_promotion_codes: true
           }
     );
-
     if (!checkoutSession?.url) {
       throw new Error("Failed to create checkout session");
     }
-
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     console.error("Checkout session error:", error);

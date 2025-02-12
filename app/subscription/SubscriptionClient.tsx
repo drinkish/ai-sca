@@ -19,28 +19,47 @@ export default function SubscriptionClient() {
   useEffect(() => {
     const handleSubscriptionSuccess = async () => {
       if (searchParams.get('success')) {
-        try {
-          // Force an immediate session refresh
+        setIsLoading(true);
+        let attempts = 0;
+        const maxAttempts = 5;
 
-          setIsSubscribed(true);
-          
-          if (session?.user?.subscriptionStatus === 'active') {
-            router.replace('/subscription');
-            return;
+        try {
+          while (attempts < maxAttempts) {
+            console.log(`Attempt ${attempts + 1} to refresh session`);
+            
+            // Force a session update
+            await update();
+            
+            // Get the latest session
+            const newSession = await getSession();
+            console.log('Current session status:', newSession?.user?.subscriptionStatus);
+
+            if (newSession?.user?.subscriptionStatus === 'active') {
+              console.log('Subscription active, redirecting to start page');
+              window.location.href = '/start';
+              return;
+            }
+
+            // Wait before next attempt
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            attempts++;
           }
           
           // Redirect to start page after successful subscription
           router.replace('/start');
 
+          console.log('Max attempts reached, redirecting anyway');
+          window.location.href = '/start';
         } catch (error) {
           console.error('Failed to refresh session:', error);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
 
     handleSubscriptionSuccess();
-  }, [searchParams, update, router, session]);
-
+  }, [searchParams, update]);
   // Handle subscription cancellation
   useEffect(() => {
     if (searchParams.get('canceled')) {
@@ -48,7 +67,6 @@ export default function SubscriptionClient() {
       router.replace('/subscription');
     }
   }, [searchParams, router]);
-
   const handleSubscribe = async () => {
     setIsLoading(true);
     setError(null);
@@ -57,12 +75,10 @@ export default function SubscriptionClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to start checkout process");
       }
-
       const { url } = await response.json();
       
       if (!url) {
@@ -84,7 +100,7 @@ export default function SubscriptionClient() {
     const checkSubStatus = async () => {
       setIsSubscribed(session?.user?.subscriptionStatus === 'active' || false);
     }
-    
+
     checkSubStatus();
 
     console.log('Current session status:', {
@@ -93,7 +109,6 @@ export default function SubscriptionClient() {
       loading: status === 'loading'
     });
   }, [session, status]);
-
   // Loading state
   if (status === 'loading') {
     return (
@@ -104,11 +119,12 @@ export default function SubscriptionClient() {
   }
 
   // Check if user has active subscription
+
   // const isSubscribed = session?.user?.subscriptionStatus === 'active';
-  
+
   console.log('Check if user has active subscription');
   console.log(session?.user?.subscriptionStatus);
-  
+
   return (
     <div className="max-w-2xl mx-auto p-6 mt-16 space-y-8">
       <div className="text-center space-y-4">
