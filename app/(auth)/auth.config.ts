@@ -10,21 +10,24 @@ export const authConfig = {
   providers: [],
   callbacks: {
     authorized({ auth, request }: { auth: any; request: NextRequest }) {
-
-      const isLoggedIn = !!auth?.user;
-      const path = request.nextUrl.pathname;
+      let isLoggedIn = !!auth?.user;
+      let isOnAuth = request.nextUrl.pathname.startsWith("/register") || 
+                     request.nextUrl.pathname.startsWith("/login");
       
-      // Public paths that don't require auth checks
-      if (path.startsWith('/login') || 
-          path.startsWith('/register') || 
-          path.startsWith('/subscription')) {
-        return true;
+      // If logged in and trying to access auth pages, redirect to /start
+      if (isLoggedIn && isOnAuth) {
+        return Response.redirect(new URL("/start", request.nextUrl));
       }
 
-      // Protected paths
-      if (path.startsWith('/')) {
-        return isLoggedIn;
-      }
+      // // If trying to access auth pages, allow access
+      // if (isOnAuth) {
+      //   return true;
+      // }
+
+      // // For all other routes, require authentication
+      // if (!isLoggedIn) {
+      //   return false;
+      // }
 
       // Allow logged in users to access all other routes
       return true;

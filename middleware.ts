@@ -51,34 +51,34 @@ export async function middleware(request: NextRequest) {
   }  
 
   // Check if the authorized callback exists and use it
-  if (typeof authConfig.callbacks?.authorized === 'function') {
-    const authResult = await authConfig.callbacks.authorized({
-      auth: session,
-      request
-    });
+  // if (typeof authConfig.callbacks?.authorized === 'function') {
+  //   const authResult = await authConfig.callbacks.authorized({
+  //     auth: session,
+  //     request
+  //   });
 
-    // Only redirect to /login if not authorized and not already on auth pages
-    if (authResult !== true) {
-      const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
-      request.nextUrl.pathname.startsWith('/register');
-      if (!isAuthPage) {
-        return NextResponse.redirect(new URL('/login', request.url));
-      }
-    }
+  //   // Only redirect to /login if not authorized and not already on auth pages
+  //   if (authResult !== true) {
+  //     const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
+  //     request.nextUrl.pathname.startsWith('/register');
+  //     if (!isAuthPage) {
+  //       return NextResponse.redirect(new URL('/login', request.url));
+  //     }
+  //   }
 
-    // Allow the response if it's a redirect
-    if (authResult instanceof Response) {
-      return authResult;
-    }
-  } else {
-    // Default behavior if no authorized callback
-    if (!session && 
-        !request.nextUrl.pathname.startsWith('/login') && 
-        !request.nextUrl.pathname.startsWith('/register')) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  //   // Allow the response if it's a redirect
+  //   if (authResult instanceof Response) {
+  //     return authResult;
+  //   }
+  // } else {
+  //   // Default behavior if no authorized callback
+  //   if (!session && 
+  //       !request.nextUrl.pathname.startsWith('/login') && 
+  //       !request.nextUrl.pathname.startsWith('/register')) {
+  //     return NextResponse.redirect(new URL('/login', request.url));
+  //   }
 
-  }
+  // }
 
   // Allow the request to continue if authorized
   return NextResponse.next();
