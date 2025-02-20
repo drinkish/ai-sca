@@ -16,26 +16,28 @@ export const authConfig = {
       
       // If logged in and trying to access auth pages, redirect to /start
       if (isLoggedIn && isOnAuth) {
-        return Response.redirect(new URL("/start", request.nextUrl));
+
+        
+        if(auth.subscriptionStatus !== 'active') {
+          return Response.redirect(new URL("/start", request.nextUrl));
+        }
+      
       }
 
-      // // If trying to access auth pages, allow access
-      // if (isOnAuth) {
-      //   return true;
-      // }
+      // If trying to access auth pages, allow access
+      if (isOnAuth) {
+        return true;
+      }
 
-      // // For all other routes, require authentication
-      // if (!isLoggedIn) {
-      //   return false;
-      // }
 
       // Allow logged in users to access all other routes
-      return true;
+      return isLoggedIn;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60,
   }
 } satisfies NextAuthConfig;

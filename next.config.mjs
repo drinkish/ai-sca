@@ -4,8 +4,8 @@ const nextConfig = {
   //   return [
   //     {
   //       source: '/',
-  //       destination: '/start',
-  //       permanent: false,
+  //       destination: '/login',
+  //       permanent: true,
   //     },
   //   ];
   // },
