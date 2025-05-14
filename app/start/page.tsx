@@ -1,9 +1,11 @@
 "use client";
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
 
 export default function StartPage() {
   const router = useRouter();
@@ -16,29 +18,33 @@ export default function StartPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = 'https://app.scaprep.co.uk/'}>
-          <CardHeader>
-            <CardTitle>AI Tutor</CardTitle>
-            <CardDescription>Interactive learning with our AI tutor</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Engage in dynamic conversations with our AI tutor for personalized learning and instant feedback.
-            </p>
-          </CardContent>
-        </Card>
+        <Link href={"/"} >
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle>AI Tutor</CardTitle>
+              <CardDescription>Interactive learning with our AI tutor</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Engage in dynamic conversations with our AI tutor for personalized learning and instant feedback.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/sca-generator')}>
-          <CardHeader>
-            <CardTitle>SCA Cases</CardTitle>
-            <CardDescription>Practice with generated SCA cases</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Work through AI-generated SCA cases to improve your clinical assessment skills.
-            </p>
-          </CardContent>
-        </Card>
+        <Link href={"/sca-generator"} >
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle>SCA Cases</CardTitle>
+              <CardDescription>Practice with generated SCA cases</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Work through AI-generated SCA cases to improve your clinical assessment skills.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

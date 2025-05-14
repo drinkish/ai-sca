@@ -44,6 +44,9 @@ export default function SubscriptionClient() {
             await new Promise(resolve => setTimeout(resolve, 2000));
             attempts++;
           }
+          
+          // Redirect to start page after successful subscription
+          router.replace('/start');
 
           console.log('Max attempts reached, redirecting anyway');
           window.location.href = '/start';
